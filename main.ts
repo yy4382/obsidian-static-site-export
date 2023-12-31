@@ -1,4 +1,6 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { get } from 'http';
+import { App, Editor, FileManager, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, getLinkpath } from 'obsidian';
+import * as YAML from 'yaml';
 
 // Remember to rename these classes and interfaces!
 
@@ -12,6 +14,8 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
+	postsTFiles: TFile[];
+	allTFiles: TFile[];
 
 	async onload() {
 		await this.loadSettings();
@@ -19,7 +23,8 @@ export default class MyPlugin extends Plugin {
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
+			new Notice('This is a notice!111');
+			this.process();
 		});
 		// Perform additional things with the ribbon
 		ribbonIconEl.addClass('my-plugin-ribbon-class');
@@ -82,6 +87,112 @@ export default class MyPlugin extends Plugin {
 
 	}
 
+	async process() {
+		this.allTFiles = this.app.vault.getFiles();
+		let posts_ob = await this.validateNote();
+		let posts_hexo = []
+		for (let post of posts_ob) {
+			posts_hexo.push(await this.handlings(post));
+		}
+
+		console.log(posts_hexo);
+	}
+	async handlings(post: { tFile: TFile; frontmatter: {}; article: string; }) {
+		post.article = await this.handleLinks(post);
+		return post;
+	}
+	async handleLinks(post: { tFile: TFile; frontmatter: {}; article: string; }) {
+		let noteContent = post.article
+		const regex = /(!?)\[\[([^\]]+)\]\]/g;
+		// link[0]: [[abc]] or ![[abc]]
+		// link[1]: "" or "!"
+		// link[2]: "abc"
+		const links = [...noteContent.split("---")[2].matchAll(regex)];
+
+		for (const link of links) {
+			const pattern = /^([^#|]*)(?:#([^|]*))?(?:\|(.+))?$/;
+			/*
+			matches[0]: "abc#ee|ff"
+			matches[1]: abc | undefined
+			matches[2]: ee | undefined
+			matches[3]: ff | undefined
+			*/
+			const matches = link[2].match(pattern);
+
+
+			if (matches === null) {
+				new Notice("Invalid link " + link[0])
+				throw new Error("Invalid link " + link[0])
+			}
+
+			const linkNote = await this.findNote(matches[1])
+			console.log(matches[1])
+			if (!linkNote) {
+				new Notice(`file not found for ${link[0]}`);
+				continue;
+			}
+			const file = linkNote.file;
+			if (linkNote.type === 2) {
+
+				const linkContent = await this.app.vault.cachedRead(file);
+				const linkFrontmatter = await this.getYaml(linkContent);
+				const plink = linkFrontmatter.plink + (matches[2] ? `#${matches[2]}` : '');
+				const linkTitle = matches[3] ? matches[3] : (matches[2] ? linkFrontmatter.title + "#" + matches[2] : linkFrontmatter.title);
+				noteContent = noteContent.replace(link[0], `[${linkTitle}](/post/${plink})`);
+			} else if (linkNote.type === 1) {
+				const linkTitle = matches[3] ? matches[3] : link[2];
+				noteContent = noteContent.replace(link[0], link[2]);
+			} else if (linkNote.type === 0) {
+				let image_url = await this.handleImage(linkNote.file);
+				noteContent = noteContent.replace(link[0], `![image](${image_url})`)
+			}
+
+		}
+
+		return noteContent;
+	}
+
+	async validateNote(): Promise<{ tFile: TFile; frontmatter: {}; article: string; }[]> {
+		let posts = [];
+		this.postsTFiles = []; // Initialize the postsTFiles array
+		for (let note of this.allTFiles) {
+			if (note.extension !== "md") continue;
+			let noteContent = await this.app.vault.cachedRead(note);
+			const frontmatter = await this.getYaml(noteContent);
+			if (frontmatter?.published === true) {
+				this.postsTFiles.push(note);
+				posts.push({ tFile: note, frontmatter: frontmatter, article: noteContent });
+			}
+		}
+		return posts;
+	}
+
+	async getYaml(noteContent: string) {
+		if (noteContent.indexOf("---") != 0) return null;
+
+		const frontmatterText = noteContent.split("---")[1];
+		const frontmatter = YAML.parse(frontmatterText);
+		return frontmatter;
+	}
+	async handleImage(file: TFile) {
+		//!TODO
+		return ""
+	}
+	async findNote(link: string): Promise<{ file: TFile; type: number } | null> {
+		for (const post of this.postsTFiles) {
+			if (post.basename === link)
+				return { file: post, type: 2 };
+		}
+		for (const file of this.allTFiles) {
+			if (link.split(".")[0] === file.basename) {
+				if (file.extension === "md") return { file: file, type: 1 };
+				else return { file: file, type: 0 };
+			}
+
+		}
+		return null;
+	}
+
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
@@ -97,12 +208,12 @@ class SampleModal extends Modal {
 	}
 
 	onOpen() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.setText('Woah!');
 	}
 
 	onClose() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.empty();
 	}
 }
@@ -116,7 +227,7 @@ class SampleSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
