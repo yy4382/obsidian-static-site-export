@@ -1,29 +1,59 @@
-import { get } from 'http';
 import { App, Editor, FileManager, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, getLinkpath } from 'obsidian';
 import * as YAML from 'yaml';
+import { S3Client, ListBucketsCommand, GetObjectCommand, NoSuchKey, PutObjectCommand, ListObjectsCommand } from "@aws-sdk/client-s3";
+import * as crypto from 'crypto';
+const { Readable } = require('stream');
+import axios, { AxiosResponse } from 'axios';
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+function hashArrayBuffer(arrayBuffer: ArrayBuffer) {
+	const hash = crypto.createHash('sha256');
+	hash.update(Buffer.from(arrayBuffer));
+	return hash.digest('hex');
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+interface PostProcessSettings {
+	endpoint: string;
+	region: string;
+	bucket: string;
+	access_key_id: string;
+	secret_access_key: string;
+	easyimage_api_endpoint: string;
+	easyimage_api_key: string;
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+const DEFAULT_SETTINGS: PostProcessSettings = {
+	endpoint: '',
+	region: 'us-east-1',
+	bucket: '',
+	access_key_id: '',
+	secret_access_key: '',
+	easyimage_api_endpoint: 'https://yourdomain/api/index.php',
+	easyimage_api_key: ''
+}
+
+export default class Ob2StaticPlugin extends Plugin {
+	settings: PostProcessSettings;
 	postsTFiles: TFile[];
 	allTFiles: TFile[];
+	client: S3Client;
 
 	async onload() {
 		await this.loadSettings();
 
+		this.client = new S3Client({
+			endpoint: this.settings.endpoint,
+			// forcePathStyle: true,
+			region: this.settings.region,
+			credentials: {
+				accessKeyId: this.settings.access_key_id,
+				secretAccessKey: this.settings.secret_access_key
+			}
+		});
+
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
-			new Notice('This is a notice!111');
+			new Notice('Starting process');
 			this.process();
 		});
 		// Perform additional things with the ribbon
@@ -71,7 +101,7 @@ export default class MyPlugin extends Plugin {
 		// });
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		// this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new Ob2StaticSettingTab(this.app, this));
 
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
@@ -90,24 +120,61 @@ export default class MyPlugin extends Plugin {
 	async process() {
 		this.allTFiles = this.app.vault.getFiles();
 		let posts_ob = await this.validateNote();
-		let posts_hexo = []
-		for (let post of posts_ob) {
-			posts_hexo.push(await this.handlings(post));
-		}
+		let posts_hexo: { tFile: TFile; frontmatter: {}; article: string; }[] = [];
+
+		// Parallel processing of each element in posts_ob
+		await Promise.all(posts_ob.map(async (post) => {
+			const processedPost = await this.handlings(post);
+			posts_hexo.push(processedPost);
+		}));
 
 		console.log(posts_hexo);
+		new Notice("Process complete, Start uploading (" + posts_hexo.length + ")")
+		await Promise.all(posts_hexo.map(async post => {
+			await this.upload(post)
+		}))
+		new Notice("Upload complete")
 	}
+	async upload(post: { tFile: TFile; frontmatter: {}; article: string; }) {
+		const postContent = `---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + post.article
+		const filename = 'plink' in post.frontmatter ? post.frontmatter.plink : post.tFile.basename
+		const config = {
+			Bucket: this.settings.bucket,
+			Key: `posts/${filename}.md`,
+			Body: postContent,
+			ContentType: 'text/markdown'
+		}
+		try {
+			const data = await this.client.send(new PutObjectCommand(config))
+			if (data.$metadata.httpStatusCode && data.$metadata.httpStatusCode >= 200 && data.$metadata.httpStatusCode < 300) {
+			} else {
+				// HTTP status code is not in the 2xx range, indicating an error
+				console.log(data.$metadata.httpStatusCode);
+				new Notice("Error while uploading post")
+				throw new Error("Error while uploading post")
+			}
+		} catch (err) {
+			console.log(err)
+			new Notice("Error while uploading post")
+			throw new Error("Error while uploading post")
+		}
+	}
+
 	async handlings(post: { tFile: TFile; frontmatter: {}; article: string; }) {
 		post.article = await this.handleLinks(post);
+		post.frontmatter = await this.handleTags(post.frontmatter);
 		return post;
 	}
 	async handleLinks(post: { tFile: TFile; frontmatter: {}; article: string; }) {
-		let noteContent = post.article
+		let article = post.article.replace(/^\n*# .*\n*/, '');
+		// article = article.replace(/(?:\s|^)(#\S+)(?:\s|$)/g,'');
 		const regex = /(!?)\[\[([^\]]+)\]\]/g;
-		// link[0]: [[abc]] or ![[abc]]
-		// link[1]: "" or "!"
-		// link[2]: "abc"
-		const links = [...noteContent.split("---")[2].matchAll(regex)];
+		/*
+		link[0]: [[abc]] or ![[abc]]
+		link[1]: "" or "!"
+		link[2]: "abc"
+		*/
+		const links = [...article.matchAll(regex)];
 
 		for (const link of links) {
 			const pattern = /^([^#|]*)(?:#([^|]*))?(?:\|(.+))?$/;
@@ -126,7 +193,6 @@ export default class MyPlugin extends Plugin {
 			}
 
 			const linkNote = await this.findNote(matches[1])
-			console.log(matches[1])
 			if (!linkNote) {
 				new Notice(`file not found for ${link[0]}`);
 				continue;
@@ -138,32 +204,52 @@ export default class MyPlugin extends Plugin {
 				const linkFrontmatter = await this.getYaml(linkContent);
 				const plink = linkFrontmatter.plink + (matches[2] ? `#${matches[2]}` : '');
 				const linkTitle = matches[3] ? matches[3] : (matches[2] ? linkFrontmatter.title + "#" + matches[2] : linkFrontmatter.title);
-				noteContent = noteContent.replace(link[0], `[${linkTitle}](/post/${plink})`);
+				article = article.replace(link[0], `[${linkTitle}](/post/${plink})`);
 			} else if (linkNote.type === 1) {
 				const linkTitle = matches[3] ? matches[3] : link[2];
-				noteContent = noteContent.replace(link[0], link[2]);
+				article = article.replace(link[0], link[2]);
 			} else if (linkNote.type === 0) {
 				let image_url = await this.handleImage(linkNote.file);
-				noteContent = noteContent.replace(link[0], `![image](${image_url})`)
+				article = article.replace(link[0], `![image](${image_url})`)
 			}
 
 		}
 
-		return noteContent;
+		return article;
+	}
+	async handleTags(frontmatter: {}) {
+		if (!("tags" in frontmatter)) return frontmatter
+		let tags = frontmatter.tags
+		if (typeof tags === 'string') {
+			if (tags.indexOf("/") == 0) return frontmatter
+			frontmatter.tags = tags.split("/")[-1]
+			return frontmatter
+		} else if (Array.isArray(tags)) {
+			let newTags: string[] = []
+			for (let tag of tags) {
+				// console.log(tag.split("/")[tag.split("/").length-1])
+				newTags.push(tag.split("/")[tag.split("/").length - 1])
+			}
+			// console.log(newTags)
+			frontmatter.tags = newTags
+		}
+		return frontmatter
 	}
 
 	async validateNote(): Promise<{ tFile: TFile; frontmatter: {}; article: string; }[]> {
-		let posts = [];
+		let posts: { tFile: TFile; frontmatter: {}; article: string; }[] = [];
 		this.postsTFiles = []; // Initialize the postsTFiles array
-		for (let note of this.allTFiles) {
-			if (note.extension !== "md") continue;
-			let noteContent = await this.app.vault.cachedRead(note);
-			const frontmatter = await this.getYaml(noteContent);
-			if (frontmatter?.published === true) {
-				this.postsTFiles.push(note);
-				posts.push({ tFile: note, frontmatter: frontmatter, article: noteContent });
-			}
-		}
+		await Promise.all(
+			this.allTFiles.map(async (note) => {
+				if (note.extension !== "md") return;
+				let noteContent = await this.app.vault.cachedRead(note);
+				const frontmatter = await this.getYaml(noteContent);
+				if (frontmatter?.published === true) {
+					this.postsTFiles.push(note);
+					posts.push({ tFile: note, frontmatter: frontmatter, article: noteContent.split("---")[2] });
+				}
+			})
+		);
 		return posts;
 	}
 
@@ -175,8 +261,67 @@ export default class MyPlugin extends Plugin {
 		return frontmatter;
 	}
 	async handleImage(file: TFile) {
-		//!TODO
-		return ""
+		// return ""
+		let images: { hash: string, url: string }[] = []
+		const params = {
+			Bucket: this.settings.bucket,
+			Key: "images.json",
+		}
+		try {
+			const data = await this.client.send(new GetObjectCommand(params))
+			const dataBody = await data.Body?.transformToString()
+			if (dataBody) {
+
+				images = JSON.parse(dataBody)
+			}
+
+		} catch (err) {
+			console.log(err);
+			if (!(err instanceof NoSuchKey)) {
+				new Notice("Error while fetching images.json")
+				throw new Error("Error while fetching images.json")
+			}
+
+		}
+
+		let fileContent = await this.app.vault.readBinary(file);
+		let image_hash = hashArrayBuffer(fileContent);
+
+
+		for (let image of images) {
+			if (image.hash === image_hash) {
+				return image.url;
+			}
+		}
+
+		const image_url = await this.uploadEasyImage(file);
+		images.push({ hash: image_hash, url: image_url });
+		const updateParams = {
+			Bucket: this.settings.bucket,
+			Key: "images.json",
+			Body: JSON.stringify(images),
+			ContentType: 'application/json'
+		}
+		this.client.send(new PutObjectCommand(updateParams)).catch(err => {
+			new Notice("Error while updating images.json")
+			throw new Error("Error while updating images.json")
+		})
+		return image_url
+	}
+	async uploadEasyImage(tfile: TFile): Promise<string> {
+		let imgBuf = await this.app.vault.readBinary(tfile);
+		const blob = new Blob([imgBuf], { type: `image/${tfile.extension}` });
+
+		const form = new FormData();
+		form.append('token', this.settings.easyimage_api_key);
+		form.append('image', blob, tfile.basename);
+
+		try {
+			const response = await axios.post("https://i.yfi.moe/api/index.php", form)
+			return response.data.url;
+		} catch (err) {
+			throw new Error("Error while uploading image")
+		};
 	}
 	async findNote(link: string): Promise<{ file: TFile; type: number } | null> {
 		for (const post of this.postsTFiles) {
@@ -188,7 +333,6 @@ export default class MyPlugin extends Plugin {
 				if (file.extension === "md") return { file: file, type: 1 };
 				else return { file: file, type: 0 };
 			}
-
 		}
 		return null;
 	}
@@ -218,28 +362,121 @@ export default class MyPlugin extends Plugin {
 // 	}
 // }
 
-// class SampleSettingTab extends PluginSettingTab {
-// 	plugin: MyPlugin;
+class Ob2StaticSettingTab extends PluginSettingTab {
+	plugin: Ob2StaticPlugin;
 
-// 	constructor(app: App, plugin: MyPlugin) {
-// 		super(app, plugin);
-// 		this.plugin = plugin;
-// 	}
+	constructor(app: App, plugin: Ob2StaticPlugin) {
+		super(app, plugin);
+		this.plugin = plugin;
+	}
 
-// 	display(): void {
-// 		const { containerEl } = this;
+	display(): void {
+		const { containerEl } = this;
 
-// 		containerEl.empty();
+		containerEl.empty();
 
-// 		new Setting(containerEl)
-// 			.setName('Setting #1')
-// 			.setDesc('It\'s a secret')
-// 			.addText(text => text
-// 				.setPlaceholder('Enter your secret')
-// 				.setValue(this.plugin.settings.mySetting)
-// 				.onChange(async (value) => {
-// 					this.plugin.settings.mySetting = value;
-// 					await this.plugin.saveSettings();
-// 				}));
-// 	}
-// }
+		new Setting(containerEl)
+			.setName('S3 API ENDPOINT')
+			.setDesc('no bucket name in it')
+			.addText(text => text
+				.setPlaceholder('endpoint')
+				.setValue(this.plugin.settings.endpoint)
+				.onChange(async (value) => {
+					this.plugin.settings.endpoint = value;
+					await this.plugin.saveSettings();
+				}));
+		new Setting(containerEl)
+			.setName('S3 API Region')
+			.setDesc('us-east-1')
+			.addText(text => text
+				.setPlaceholder('endpoint')
+				.setValue(this.plugin.settings.region)
+				.onChange(async (value) => {
+					this.plugin.settings.endpoint = value;
+					await this.plugin.saveSettings();
+				}));
+		new Setting(containerEl)
+			.setName('S3 API Bucket')
+			.setDesc('Bucket name')
+			.addText(text => text
+				.setPlaceholder('bucket')
+				.setValue(this.plugin.settings.bucket)
+				.onChange(async (value) => {
+					this.plugin.settings.bucket = value;
+					await this.plugin.saveSettings();
+				}));
+		new Setting(containerEl)
+			.setName('S3 API Access Key ID')
+			.setDesc('Access Key ID')
+			.addText(text => text
+				.setPlaceholder('access_key_id')
+				.setValue(this.plugin.settings.access_key_id)
+				.onChange(async (value) => {
+					this.plugin.settings.access_key_id = value;
+					await this.plugin.saveSettings();
+				}));
+		new Setting(containerEl)
+			.setName('S3 API Secret Access Key')
+			.setDesc('Secret Access Key')
+			.addText(text => text
+				.setPlaceholder('secret_access_key')
+				.setValue(this.plugin.settings.secret_access_key)
+				.onChange(async (value) => {
+					this.plugin.settings.secret_access_key = value;
+					await this.plugin.saveSettings();
+				}));
+		new Setting(containerEl)
+			.setName('S3 API Test')
+			.setDesc('Test S3 API')
+			.addButton(button => button
+				.setButtonText('Test')
+				.onClick(async () => {
+					const client = new S3Client({
+						endpoint: this.plugin.settings.endpoint,
+						// forcePathStyle: true,
+						region: this.plugin.settings.region,
+						credentials: {
+							accessKeyId: this.plugin.settings.access_key_id,
+							secretAccessKey: this.plugin.settings.secret_access_key
+						}
+					});
+					try {
+						const data = await client.send(new ListObjectsCommand({ Bucket: this.plugin.settings.bucket }));
+						if (data.$metadata.httpStatusCode && data.$metadata.httpStatusCode >= 200 && data.$metadata.httpStatusCode < 300) {
+							new Notice("Test success")
+						} else {
+							// HTTP status code is not in the 2xx range, indicating an error
+							console.log(data.$metadata.httpStatusCode);
+							new Notice("Test failed")
+						}
+					} catch (err) {
+						console.log(err)
+						new Notice("Test failed")
+					}
+				}));
+		new Setting(containerEl)
+			.setHeading()
+			.setName('Easyimage API')
+
+		new Setting(containerEl)
+			.setName('Easyimage API endpoint')
+			.setDesc('https://yourdomain/api/index.php')
+			.addText(text => text
+				.setPlaceholder('https://yourdomain/api/index.php')
+				.setValue(this.plugin.settings.easyimage_api_endpoint)
+				.onChange(async (value) => {
+					this.plugin.settings.endpoint = value;
+					await this.plugin.saveSettings();
+				}));
+		
+		new Setting(containerEl)
+			.setName('Easyimage API Key')
+			.addText(text => text
+				.setPlaceholder('easyimage_api_key')
+				.setValue(this.plugin.settings.easyimage_api_key)
+				.onChange(async (value) => {
+					this.plugin.settings.easyimage_api_key = value;
+					await this.plugin.saveSettings();
+				}));
+	}
+}
