@@ -1,6 +1,6 @@
 {
 	"name": "ob2static-site",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Export specific notes to general md for static site generation",
 	"main": "main.js",
 	"scripts": {
