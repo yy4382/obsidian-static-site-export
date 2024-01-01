@@ -1,11 +1,11 @@
 {
-	"id": "post-process",
-	"name": "Post process",
+	"id": "ob2static-site",
+	"name": "Obsidian to Static Site",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Export specific notes to general md for static site generation",
+	"author": "yy4382",
+	"authorUrl": "https://yfi.moe",
+	"fundingUrl": "",
 	"isDesktopOnly": false
 }

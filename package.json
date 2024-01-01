@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "ob2static-site",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Export specific notes to general md for static site generation",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
