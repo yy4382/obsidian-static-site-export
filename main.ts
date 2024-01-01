@@ -1,9 +1,9 @@
-import { App, Editor, FileManager, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, getLinkpath } from 'obsidian';
+import { App, Editor, FileManager, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 import * as YAML from 'yaml';
-import { S3Client, ListBucketsCommand, GetObjectCommand, NoSuchKey, PutObjectCommand, ListObjectsCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, NoSuchKey, PutObjectCommand, ListObjectsCommand } from "@aws-sdk/client-s3";
 import * as crypto from 'crypto';
 const { Readable } = require('stream');
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 
 function hashArrayBuffer(arrayBuffer: ArrayBuffer) {
 	const hash = crypto.createHash('sha256');
