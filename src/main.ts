@@ -101,7 +101,7 @@ export default class Ob2StaticPlugin extends Plugin {
 		});
 		this.allTFiles = this.app.vault.getFiles();
 		let posts_ob = await this.validateNote();
-		let posts_hexo: { tFile: TFile; frontmatter: {}; article: string; }[] = [];
+		let posts_hexo: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }[] = [];
 
 		// Parallel processing of each element in posts_ob
 		await Promise.all(posts_ob.map(async (post) => {
@@ -115,10 +115,10 @@ export default class Ob2StaticPlugin extends Plugin {
 			await this.upload(post)
 		}))
 		new Notice("Upload complete")
-		
+
 		this.client.destroy();
 	}
-	async upload(post: { tFile: TFile; frontmatter: {}; article: string; }) {
+	async upload(post: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }) {
 		const postContent = `---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + post.article
 		const filename = 'plink' in post.frontmatter ? post.frontmatter.plink : post.tFile.basename
 		const config = {
@@ -143,7 +143,7 @@ export default class Ob2StaticPlugin extends Plugin {
 		}
 	}
 
-	async handlings(post: { tFile: TFile; frontmatter: {}; article: string; }) {
+	async handlings(post: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }) {
 		post.article = await this.handleLinks(post);
 		post.frontmatter = await this.handleTags(post.frontmatter);
 		return post;
@@ -200,7 +200,7 @@ export default class Ob2StaticPlugin extends Plugin {
 
 		return article;
 	}
-	async handleTags(frontmatter: {}) {
+	async handleTags(frontmatter: { tags: string[] | string, plink: string, title: string }) {
 		if (!("tags" in frontmatter)) return frontmatter
 		let tags = frontmatter.tags
 		if (typeof tags === 'string') {
@@ -219,8 +219,8 @@ export default class Ob2StaticPlugin extends Plugin {
 		return frontmatter
 	}
 
-	async validateNote(): Promise<{ tFile: TFile; frontmatter: {}; article: string; }[]> {
-		let posts: { tFile: TFile; frontmatter: {}; article: string; }[] = [];
+	async validateNote(): Promise<{ tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }[]> {
+		let posts: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }[] = [];
 		this.postsTFiles = []; // Initialize the postsTFiles array
 		await Promise.all(
 			this.allTFiles.map(async (note) => {
