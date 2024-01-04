@@ -126,7 +126,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
                 .setPlaceholder('https://yourdomain/api/index.php')
                 .setValue(this.plugin.settings.easyimage_api_endpoint)
                 .onChange(async (value) => {
-                    this.plugin.settings.endpoint = value;
+                    this.plugin.settings.easyimage_api_endpoint = value;
                     await this.plugin.saveSettings();
                 }));
 
