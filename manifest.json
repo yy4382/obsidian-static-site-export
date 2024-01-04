@@ -1,7 +1,7 @@
 {
 	"id": "ob2static-site",
 	"name": "Obsidian to Static Site",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"minAppVersion": "0.15.0",
 	"description": "Export specific notes to general md for static site generation",
 	"author": "yy4382",
