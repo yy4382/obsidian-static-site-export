@@ -6,6 +6,12 @@ import axios from 'axios';
 import { StaticExporterSettings, DEFAULT_SETTINGS, Ob2StaticSettingTab } from 'src/Settings';
 import {triggerGitHubDispatchEvent} from 'src/trigger'
 
+/**
+ * Calculates the SHA256 hash of an ArrayBuffer.
+ * 
+ * @param arrayBuffer - The ArrayBuffer to be hashed.
+ * @returns The hexadecimal representation of the hash.
+ */
 function hashArrayBuffer(arrayBuffer: ArrayBuffer) {
 	const hash = crypto.createHash('sha256');
 	hash.update(Buffer.from(arrayBuffer));
@@ -104,6 +110,9 @@ export default class Ob2StaticPlugin extends Plugin {
 
 	}
 
+	/**
+	 * Processes the notes and uploads them to the specified S3 bucket.
+	 */
 	async process() {
 		this.client = new S3Client({
 			endpoint: this.settings.endpoint,
@@ -115,7 +124,7 @@ export default class Ob2StaticPlugin extends Plugin {
 			}
 		});
 		this.allTFiles = this.app.vault.getFiles();
-		let posts_ob = await this.validateNote();
+		let posts_ob = await this.getValidNotes();
 		let posts_hexo: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }[] = [];
 
 		// Parallel processing of each element in posts_ob
@@ -133,6 +142,11 @@ export default class Ob2StaticPlugin extends Plugin {
 
 		this.client.destroy();
 	}
+	/**
+	 * Uploads a post to the specified bucket.
+	 * @param post - The post object containing the file, frontmatter, and article content.
+	 * @throws Error if there is an error while uploading the post.
+	 */
 	async upload(post: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }) {
 		const postContent = `---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + post.article
 		const filename = 'plink' in post.frontmatter ? post.frontmatter.plink : post.tFile.basename
@@ -158,11 +172,24 @@ export default class Ob2StaticPlugin extends Plugin {
 		}
 	}
 
+	/**
+	 * Handles the processing of a post.
+	 * 
+	 * @param post - The post object containing the file, frontmatter, and article.
+	 * @returns The processed post object.
+	 */
 	async handlings(post: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }) {
 		post.article = await this.handleLinks(post);
 		post.frontmatter = await this.handleTags(post.frontmatter);
 		return post;
 	}
+	/**
+	 * Handles the links in a post by replacing Obsidian-style links with appropriate HTML links or image tags.
+	 * 
+	 * @param post - The post object containing the file, frontmatter, and article content.
+	 * @returns The modified article content with replaced links.
+	 * @throws Error if an invalid link is encountered.
+	 */
 	async handleLinks(post: { tFile: TFile; frontmatter: {}; article: string; }) {
 		let article = post.article.replace(/^\n*# .*\n*/, '');
 		// article = article.replace(/(?:\s|^)(#\S+)(?:\s|$)/g,'');
@@ -215,6 +242,13 @@ export default class Ob2StaticPlugin extends Plugin {
 
 		return article;
 	}
+	/**
+	 * Handles the tags in the frontmatter.
+	 * If the tags are a string, it splits the string by "/" and keeps only the last part.
+	 * If the tags are an array, it iterates through each tag and keeps only the last part of each tag.
+	 * @param frontmatter - The frontmatter object containing the tags.
+	 * @returns The updated frontmatter object with the tags handled.
+	 */
 	async handleTags(frontmatter: { tags: string[] | string, plink: string, title: string }) {
 		if (!("tags" in frontmatter)) return frontmatter
 		let tags = frontmatter.tags
@@ -234,7 +268,16 @@ export default class Ob2StaticPlugin extends Plugin {
 		return frontmatter
 	}
 
-	async validateNote(): Promise<{ tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }[]> {
+	/**
+	 * Retrieves an array of valid notes.
+	 * A valid note is a Markdown file with published frontmatter.
+	 * @returns A promise that resolves to an array of objects representing valid notes.
+	 * Each object contains the following properties:
+	 * - tFile: The TFile object representing the note file.
+	 * - frontmatter: An object containing the frontmatter properties of the note.
+	 * - article: The content of the note article (excluding frontmatter).
+	 */
+	async getValidNotes(): Promise<{ tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }[]> {
 		let posts: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }[] = [];
 		this.postsTFiles = []; // Initialize the postsTFiles array
 		await Promise.all(
@@ -258,6 +301,14 @@ export default class Ob2StaticPlugin extends Plugin {
 		const frontmatter = YAML.parse(frontmatterText);
 		return frontmatter;
 	}
+	/**
+	 * Handles the image file by checking if it already exists in the S3 bucket.
+	 * If the image exists, returns the URL of the existing image.
+	 * If the image does not exist, uploads the image to the S3 bucket and returns the URL of the uploaded image.
+	 * @param file - The image file to handle.
+	 * @returns The URL of the image.
+	 * @throws Error if there is an error while fetching or updating the images.json file.
+	 */
 	async handleImage(file: TFile) {
 		// return ""
 		let images: { hash: string, url: string }[] = []
@@ -306,6 +357,12 @@ export default class Ob2StaticPlugin extends Plugin {
 		})
 		return image_url
 	}
+	/**
+	 * Uploads an image file to a remote server using the EasyImage API.
+	 * @param tfile - The image file to be uploaded.
+	 * @returns A Promise that resolves to the URL of the uploaded image.
+	 * @throws An error if there is an issue while uploading the image.
+	 */
 	async uploadEasyImage(tfile: TFile): Promise<string> {
 		let imgBuf = await this.app.vault.readBinary(tfile);
 		const blob = new Blob([imgBuf], { type: `image/${tfile.extension}` });
@@ -315,12 +372,17 @@ export default class Ob2StaticPlugin extends Plugin {
 		form.append('image', blob, tfile.basename);
 
 		try {
-			const response = await axios.post("https://i.yfi.moe/api/index.php", form)
+			const response = await axios.post(this.settings.easyimage_api_endpoint, form)
 			return response.data.url;
 		} catch (err) {
 			throw new Error("Error while uploading image")
 		};
 	}
+	/**
+	 * Finds a note based on the provided link.
+	 * @param link - The link of the note to find.
+	 * @returns A promise that resolves to an object containing the found note file and its type, or null if the note is not found.
+	 */
 	async findNote(link: string): Promise<{ file: TFile; type: number } | null> {
 		for (const post of this.postsTFiles) {
 			if (post.basename === link)
