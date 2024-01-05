@@ -3,7 +3,8 @@ import * as YAML from 'yaml';
 import { S3Client, GetObjectCommand, NoSuchKey, PutObjectCommand, ListObjectsCommand } from "@aws-sdk/client-s3";
 import * as crypto from 'crypto';
 import axios from 'axios';
-import { PostProcessSettings, DEFAULT_SETTINGS, Ob2StaticSettingTab } from 'src/Settings';
+import { StaticExporterSettings, DEFAULT_SETTINGS, Ob2StaticSettingTab } from 'src/Settings';
+import {triggerGitHubDispatchEvent} from 'src/trigger'
 
 function hashArrayBuffer(arrayBuffer: ArrayBuffer) {
 	const hash = crypto.createHash('sha256');
@@ -23,10 +24,16 @@ export default class Ob2StaticPlugin extends Plugin {
 		await this.loadSettings();
 
 		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
+		this.addRibbonIcon('file-up', 'Static Site MD Export', async (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
 			new Notice('Starting process');
-			this.process();
+			await this.process();
+			// triggerGitHubDispatchEvent(this.settings.webhook_token, this.settings.user, this.settings.repo, this.settings.event_type)
+		});
+		this.addRibbonIcon('play-square', 'Trigger GitHub Action deploy', (evt: MouseEvent) => {
+			// Called when the user clicks the icon.
+			triggerGitHubDispatchEvent(this.settings.webhook_token, this.settings.user, this.settings.repo, this.settings.event_type)
+			new Notice('Sended GitHub Action deploy Webhook');
 		});
 		// Perform additional things with the ribbon
 		ribbonIconEl.addClass('my-plugin-ribbon-class');
@@ -36,13 +43,21 @@ export default class Ob2StaticPlugin extends Plugin {
 		// statusBarItemEl.setText('Status Bar Text');
 
 		// This adds a simple command that can be triggered anywhere
-		// this.addCommand({
-		// 	id: 'open-sample-modal-simple',
-		// 	name: 'Open sample modal (simple)',
-		// 	callback: () => {
-		// 		new SampleModal(this.app).open();
-		// 	}
-		// });
+		this.addCommand({
+			id: 'trigger-static-export',
+			name: 'Trigger Static Export',
+			callback: () => {
+				this.process();
+			}
+		});
+
+		this.addCommand({
+			id: 'trigger-github-dispatch-event',
+			name: 'Trigger GitHub Action deploy',
+			callback: () => {
+				triggerGitHubDispatchEvent(this.settings.webhook_token, this.settings.user, this.settings.repo, this.settings.event_type)
+			}
+		});
 		// This adds an editor command that can perform some operation on the current editor instance
 		// this.addCommand({
 		// 	id: 'sample-editor-command',

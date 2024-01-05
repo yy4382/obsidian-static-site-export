@@ -11,16 +11,24 @@ export interface PostProcessSettings {
     secret_access_key: string;
     easyimage_api_endpoint: string;
     easyimage_api_key: string;
+    repo: string;
+    user: string;
+    webhook_token: string;
+    event_type: string;
 }
 
-export const DEFAULT_SETTINGS: PostProcessSettings = {
+export const DEFAULT_SETTINGS: StaticExporterSettings = {
     endpoint: '',
     region: 'us-east-1',
     bucket: '',
     access_key_id: '',
     secret_access_key: '',
     easyimage_api_endpoint: 'https://yourdomain/api/index.php',
-    easyimage_api_key: ''
+    easyimage_api_key: '',
+    repo: '',
+    user: '',
+    webhook_token: '',
+    event_type: '',
 }
 
 export class Ob2StaticSettingTab extends PluginSettingTab {
@@ -139,5 +147,47 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
                     this.plugin.settings.easyimage_api_key = value;
                     await this.plugin.saveSettings();
                 }));
+
+        new Setting(containerEl)
+            .setHeading()
+            .setName('Deploy Webhook')
+
+        new Setting(containerEl)
+            .setName('Github User')
+            .addText(text => text
+                .setPlaceholder('username')
+                .setValue(this.plugin.settings.user)
+                .onChange(async (value) => {
+                    this.plugin.settings.user = value;
+                    await this.plugin.saveSettings();
+                }));
+        new Setting(containerEl)
+            .setName('Github Repo')
+            .addText(text => text
+                .setPlaceholder('easyimage_api_key')
+                .setValue(this.plugin.settings.repo)
+                .onChange(async (value) => {
+                    this.plugin.settings.repo = value;
+                    await this.plugin.saveSettings();
+                }));
+        new Setting(containerEl)
+            .setName('Github Webhook Token')
+            .addText(text => text
+                .setPlaceholder('github_webhook_token')
+                .setValue(this.plugin.settings.webhook_token)
+                .onChange(async (value) => {
+                    this.plugin.settings.webhook_token = value;
+                    await this.plugin.saveSettings();
+                }));
+        new Setting(containerEl)
+            .setName('Github Webhook Event Type')
+            .addText(text => text
+                .setPlaceholder('github_webhook_event_type')
+                .setValue(this.plugin.settings.event_type)
+                .onChange(async (value) => {
+                    this.plugin.settings.event_type = value;
+                    await this.plugin.saveSettings();
+                }));
+
     }
 }
