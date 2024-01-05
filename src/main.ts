@@ -15,7 +15,7 @@ function hashArrayBuffer(arrayBuffer: ArrayBuffer) {
 
 
 export default class Ob2StaticPlugin extends Plugin {
-	settings: PostProcessSettings;
+	settings: StaticExporterSettings;
 	postsTFiles: TFile[];
 	allTFiles: TFile[];
 	client: S3Client;
@@ -36,7 +36,7 @@ export default class Ob2StaticPlugin extends Plugin {
 			new Notice('Sended GitHub Action deploy Webhook');
 		});
 		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+		// ribbonIconEl.addClass('my-plugin-ribbon-class');
 
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		// const statusBarItemEl = this.addStatusBarItem();

@@ -3,7 +3,7 @@ import { S3Client, GetObjectCommand, NoSuchKey, PutObjectCommand, ListObjectsCom
 import Ob2StaticPlugin from 'src/main';
 
 
-export interface PostProcessSettings {
+export interface StaticExporterSettings {
     endpoint: string;
     region: string;
     bucket: string;
@@ -43,6 +43,11 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
         const { containerEl } = this;
 
         containerEl.empty();
+
+        new Setting(containerEl)
+            .setHeading()
+            .setName('S3 API')
+            .setDesc('Or S3 compatible API')
 
         new Setting(containerEl)
             .setName('S3 API ENDPOINT')
