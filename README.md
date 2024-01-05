@@ -1,96 +1,62 @@
-# Obsidian Sample Plugin
+# Static Site MD Exporter for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+This project is a plugin for Obsidian that exports your notes with a specific frontmatter into a general markdown format for static site generation.
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+Hexo or Hugo is good choices to generate site if you want to use obsidian as your blog editor (and take advantage of obsidian's wiki links).
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+## Features (How it Works?)
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+> In no case this plugin changes the content of files in vault! (It doesn't have a single line of code modifying notes)
 
-## First time developing plugins?
+The "Static Site MD Export" button on panel (Ribbon) does:
 
-Quick starting guide for new plugin devs:
+1. Get all the notes in vault with frontmatter "published" and the value is true (bool value).
+2. Transfrom them into general markdown format:
+3. For [[]] or ![[]] links (wiki links) in notes, it finds the target note. There are three cases:
+   1. Target note is also "published": change `[[target note's filename]]` into `[target note's title](target note's slug)`[^1] format (if link has a `#` or `|` or is a `![[]]` link, this plugin can smartly handle them)
+   2. Target note is not "published": remove the [[]] and leave the content in it untouched.
+   3. Target note is image file: upload it to a image hosting site. The image with same content hash will not be uploaded twice. Currently only Easyimage is supported.
+4. Change tags in frontmatter into 1-depth format (discarding content before /)
+5. Upload the markdown files onto S3 (or S3 compatible services)
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+The “Trigger GitHub Action deploy” button does:
 
-## Releasing new releases
+- Send a webhook to Github so that it knows it's time to build.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+[^1]: currently only support frontmatter key "plink" as slug. Making this configurable is in process.
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+## Usage
 
-## Adding your plugin to the community plugin list
+1. Install the plugin in Obsidian.
+2. Configure the plugin settings in Obsidian's settings panel. See [Settings.ts](src/Settings.ts) for more details on what can be configured.
+3. Click the "Static Site MD Export" and it will automaticaly process and deploy md files to s3.
+4. Use whatever you like to gererate these files into a static site. Hexo or Hugo are good choice for static site generation. A hexo example may be uploaded in the near future.
+5. If you use GitHub actions to build/deploy, try using the "Trigger GitHub Action deploy" button to simplify workflow: update your site without leaving obsidian!
 
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+## Roadmap
 
-## How to use
+### feature
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+- [ ] only get articles that are modified or deleted
+- [ ] put obsidian format tags into front matter
+- [ ] more setting choices
+- [ ] handle slug: support customize slug
+- [ ] support for other image hosting service (? maybe not)
 
-## Manually installing the plugin
+### enhance
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+- [ ] Better notice system
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+### docs
 
-## Funding URL
+- [x] write a readme
+- [ ] auto generate changelog
+- [ ] usage example of github actions
 
-You can include funding URLs where people who use your plugin can financially support it.
+### publish
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+- [ ] release plugin to community plugins
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
+## Contributing
 
-If you have multiple URLs, you can also do:
-
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
-
-## API Documentation
-
-See https://github.com/obsidianmd/obsidian-api
+Contributions are welcome! Please submit a pull request with your changes.
