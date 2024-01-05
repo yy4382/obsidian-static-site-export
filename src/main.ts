@@ -244,7 +244,7 @@ export default class Ob2StaticPlugin extends Plugin {
 				const frontmatter = await this.getYaml(noteContent);
 				if (frontmatter?.published === true) {
 					this.postsTFiles.push(note);
-					posts.push({ tFile: note, frontmatter: frontmatter, article: noteContent.split("---")[2] });
+					posts.push({ tFile: note, frontmatter: frontmatter, article: noteContent.split("---").slice(2).join("---") });
 				}
 			})
 		);
