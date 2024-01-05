@@ -4,7 +4,7 @@ import { S3Client, GetObjectCommand, NoSuchKey, PutObjectCommand, ListObjectsCom
 import * as crypto from 'crypto';
 import axios from 'axios';
 import { StaticExporterSettings, DEFAULT_SETTINGS, Ob2StaticSettingTab } from 'src/Settings';
-import {triggerGitHubDispatchEvent} from 'src/trigger'
+import { triggerGitHubDispatchEvent } from 'src/trigger'
 
 /**
  * Calculates the SHA256 hash of an ArrayBuffer.
@@ -200,8 +200,9 @@ export default class Ob2StaticPlugin extends Plugin {
 		link[2]: "abc"
 		*/
 		const links = [...article.matchAll(regex)];
+		console.log(links);
 
-		for (const link of links) {
+		let stdLinks: string[] = await Promise.all(links.map(async (link) => {
 			const pattern = /^([^#|]*)(?:#([^|]*))?(?:\|(.+))?$/;
 			/*
 			matches[0]: "abc#ee|ff"
@@ -220,7 +221,7 @@ export default class Ob2StaticPlugin extends Plugin {
 			const linkNote = await this.findNote(matches[1])
 			if (!linkNote) {
 				new Notice(`file not found for ${link[0]}`);
-				continue;
+				return link[2];
 			}
 			const file = linkNote.file;
 			if (linkNote.type === 2) {
@@ -229,15 +230,19 @@ export default class Ob2StaticPlugin extends Plugin {
 				const linkFrontmatter = await this.getYaml(linkContent);
 				const plink = linkFrontmatter.plink + (matches[2] ? `#${matches[2]}` : '');
 				const linkTitle = matches[3] ? matches[3] : (matches[2] ? linkFrontmatter.title + "#" + matches[2] : linkFrontmatter.title);
-				article = article.replace(link[0], `[${linkTitle}](/post/${plink})`);
+				return  `[${linkTitle}](/post/${plink})`;
 			} else if (linkNote.type === 1) {
 				const linkTitle = matches[3] ? matches[3] : link[2];
-				article = article.replace(link[0], link[2]);
+				return link[2];
 			} else if (linkNote.type === 0) {
 				let image_url = await this.handleImage(linkNote.file);
-				article = article.replace(link[0], `![image](${image_url})`)
+				return `![image](${image_url})`;
 			}
+			return link[2];
+		}));
 
+		for (let i = 0; i < links.length; i++) {
+			article = article.replace(links[i][0], stdLinks[i]);
 		}
 
 		return article;
