@@ -1,7 +1,7 @@
 {
 	"id": "ob2static-site",
 	"name": "Static Site MD Exporter",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"minAppVersion": "0.15.0",
 	"description": "Export specific notes to general md for static site generation",
 	"author": "yy4382",
