@@ -125,7 +125,7 @@ export default class Ob2StaticPlugin extends Plugin {
 		});
 		this.allTFiles = this.app.vault.getFiles();
 		let posts_ob = await this.getValidNotes();
-		let posts_hexo: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }[] = [];
+		let posts_hexo: { tFile: TFile; frontmatter: { tags: string[] | string, slug: string, title: string }; article: string; }[] = [];
 
 		// Parallel processing of each element in posts_ob
 		await Promise.all(posts_ob.map(async (post) => {
@@ -147,9 +147,9 @@ export default class Ob2StaticPlugin extends Plugin {
 	 * @param post - The post object containing the file, frontmatter, and article content.
 	 * @throws Error if there is an error while uploading the post.
 	 */
-	async upload(post: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }) {
+	async upload(post: { tFile: TFile; frontmatter: { tags: string[] | string, slug: string, title: string }; article: string; }) {
 		const postContent = `---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + post.article
-		const filename = 'plink' in post.frontmatter ? post.frontmatter.plink : post.tFile.basename
+		const filename = 'slug' in post.frontmatter ? post.frontmatter.slug : post.tFile.basename
 		const config = {
 			Bucket: this.settings.bucket,
 			Key: `posts/${filename}.md`,
@@ -178,7 +178,7 @@ export default class Ob2StaticPlugin extends Plugin {
 	 * @param post - The post object containing the file, frontmatter, and article.
 	 * @returns The processed post object.
 	 */
-	async handlings(post: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }) {
+	async handlings(post: { tFile: TFile; frontmatter: { tags: string[] | string, slug: string, title: string }; article: string; }) {
 		post.article = await this.handleLinks(post);
 		post.frontmatter = await this.handleTags(post.frontmatter);
 		return post;
@@ -228,9 +228,9 @@ export default class Ob2StaticPlugin extends Plugin {
 
 				const linkContent = await this.app.vault.cachedRead(file);
 				const linkFrontmatter = await this.getYaml(linkContent);
-				const plink = linkFrontmatter.plink + (matches[2] ? `#${matches[2]}` : '');
+				const slug = linkFrontmatter.slug + (matches[2] ? `#${matches[2]}` : '');
 				const linkTitle = matches[3] ? matches[3] : (matches[2] ? linkFrontmatter.title + "#" + matches[2] : linkFrontmatter.title);
-				return  `[${linkTitle}](/post/${plink})`;
+				return  `[${linkTitle}](/post/${slug})`;
 			} else if (linkNote.type === 1) {
 				const linkTitle = matches[3] ? matches[3] : link[2];
 				return link[2];
@@ -254,7 +254,7 @@ export default class Ob2StaticPlugin extends Plugin {
 	 * @param frontmatter - The frontmatter object containing the tags.
 	 * @returns The updated frontmatter object with the tags handled.
 	 */
-	async handleTags(frontmatter: { tags: string[] | string, plink: string, title: string }) {
+	async handleTags(frontmatter: { tags: string[] | string, slug: string, title: string }) {
 		if (!("tags" in frontmatter)) return frontmatter
 		let tags = frontmatter.tags
 		if (typeof tags === 'string') {
@@ -282,8 +282,8 @@ export default class Ob2StaticPlugin extends Plugin {
 	 * - frontmatter: An object containing the frontmatter properties of the note.
 	 * - article: The content of the note article (excluding frontmatter).
 	 */
-	async getValidNotes(): Promise<{ tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }[]> {
-		let posts: { tFile: TFile; frontmatter: { tags: string[] | string, plink: string, title: string }; article: string; }[] = [];
+	async getValidNotes(): Promise<{ tFile: TFile; frontmatter: { tags: string[] | string, slug: string, title: string }; article: string; }[]> {
+		let posts: { tFile: TFile; frontmatter: { tags: string[] | string, slug: string, title: string }; article: string; }[] = [];
 		this.postsTFiles = []; // Initialize the postsTFiles array
 		await Promise.all(
 			this.allTFiles.map(async (note) => {
