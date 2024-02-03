@@ -83,9 +83,10 @@ export default class PostHandler {
 				}
 				if (!matches[1]) {
 					// link to the same file
+					const encodedTitle = encodeURIComponent(matches[2]);
 					const linkPrefix = `post/${post.frontmatter.slug}/`;
 					const linkTitle = matches[3] ? matches[3] : matches[2];
-					return `[${linkTitle}](/${linkPrefix}#${matches[2]})`;
+					return `[${linkTitle}](/${linkPrefix}#${encodedTitle})`;
 				}
 				const linkNote = await this.findNote(matches[1]);
 				if (linkNote === undefined) {
@@ -103,8 +104,9 @@ export default class PostHandler {
 					return `![image](${image_url})`;
 				} else {
 					const linkFrontmatter = linkNote.frontmatter;
+					const encodedTitle = encodeURIComponent(matches[2]);
 					const slug =
-						linkFrontmatter.slug + (matches[2] ? `#${matches[2]}` : "");
+						linkFrontmatter.slug + (matches[2] ? `#${encodedTitle}` : "");
 					const linkTitle = matches[3]
 						? matches[3]
 						: matches[2]
