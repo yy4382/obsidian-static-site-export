@@ -33,7 +33,7 @@ export default class PostHandler {
 	}
 
 	private async normalizePost(postOb: Post): Promise<Post> {
-		const ProcessedArticle = await this.handleContent(postOb);
+		const ProcessedArticle = (await this.handleContent(postOb)).trim() + "\n";
 		const ProcessedFrontmatter = this.handleTags(postOb.frontmatter);
 		return {
 			tFile: postOb.tFile,
@@ -139,7 +139,7 @@ export default class PostHandler {
 			}
 		});
 		return (
-			`---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + article.trim()
+			`---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + article.trim() + `\n`
 		);
 	}
 
