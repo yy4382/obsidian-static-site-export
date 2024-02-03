@@ -1,4 +1,4 @@
-import {TFile} from "obsidian";
+import { TFile } from "obsidian";
 
 export interface Frontmatter {
 	tags?: string[] | string;
@@ -14,15 +14,29 @@ export interface Post {
 }
 
 export interface StaticExporterSettings {
-	endpoint: string;
-	region: string;
-	bucket: string;
-	access_key_id: string;
-	secret_access_key: string;
 	easyimage_api_endpoint: string;
 	easyimage_api_key: string;
-	repo: string;
-	user: string;
-	webhook_token: string;
-	event_type: string;
+	build: {
+		enable: boolean;
+		repo: string;
+		user: string;
+		webhook_token: string;
+		event_type: string;
+	};
+	uploader: {
+		type: string;
+		git: {
+			repo: string;
+			branch: string;
+			username: string;
+			pat: string;
+		};
+		s3: {
+			endpoint: string;
+			region: string;
+			bucket: string;
+			access_key_id: string;
+			secret_access_key: string;
+		};
+	};
 }

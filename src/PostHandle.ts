@@ -1,40 +1,40 @@
-import {Frontmatter, Post, StaticExporterSettings} from "src/type";
-import {Notice, TFile, Vault} from "obsidian";
-import {ImageHandler} from "./Image";
-import {S3Client} from "@aws-sdk/client-s3";
+import * as YAML from "yaml";
+import { Notice, TFile, Vault } from "obsidian";
+import { Frontmatter, Post, StaticExporterSettings } from "@/type";
+import ImageHandler from "@/Image";
 
-export class PostHandler {
+export default class PostHandler {
 	private settings: StaticExporterSettings;
-	private postsOb: Post[];
+	private readonly postsOb: Post[];
 	private readonly allFiles: TFile[];
 	private imgHandler: ImageHandler;
-	private client: S3Client;
 	private vault: Vault;
 
-	constructor(settings: StaticExporterSettings, allFiles: TFile[], client: S3Client, vault: Vault) {
+	constructor(
+		allFiles: TFile[],
+		postsOb: Post[],
+		settings: StaticExporterSettings,
+		vault: Vault
+	) {
 		this.settings = settings;
 		this.allFiles = allFiles;
-		this.client = client;
 		this.vault = vault;
+		this.postsOb = postsOb;
 	}
 
-	async normalize(postsOb: Post[]) {
-		this.imgHandler = new ImageHandler(this.client, this.settings, this.vault);
-		await this.imgHandler.init();
+	async normalize(): Promise<Post[]> {
+		this.imgHandler = new ImageHandler(this.settings, this.vault);
 
-		this.postsOb = postsOb;
 		const postsHexo: Post[] = await Promise.all(
-			postsOb.map((post: Post) => this.normalizePost(post))
+			this.postsOb.map((postOb: Post) => this.normalizePost(postOb))
 		);
-
-		await this.imgHandler.finish();
 
 		return postsHexo;
 	}
 
 	private async normalizePost(postOb: Post): Promise<Post> {
 		const ProcessedArticle = await this.handleContent(postOb);
-		const ProcessedFrontmatter = await this.handleTags(postOb.frontmatter);
+		const ProcessedFrontmatter = this.handleTags(postOb.frontmatter);
 		return {
 			tFile: postOb.tFile,
 			frontmatter: ProcessedFrontmatter,
@@ -47,7 +47,7 @@ export class PostHandler {
 		return normalizedLink.replace(/^\n*# .*\n*/, "");
 	}
 
-	private async handleLinks(post: Post) {
+	private async handleLinks(post: Post): Promise<string> {
 		const regex = /(!?)\[\[([^\]]+)\]\]/g;
 		/**
 		 * obLink[0]: [[abc]] or ![[abc]]
@@ -59,8 +59,8 @@ export class PostHandler {
 		const obLinks = [...post.article.matchAll(regex)];
 		// console.log(obLinks);
 
-		let stdLinks: string[] = await Promise.all(
-			obLinks.map(async (link) => {
+		const stdLinks: string[] = await Promise.all(
+			obLinks.map(async (obLink) => {
 				const pattern = /^([^#|]*)(?:#([^|]*))?(?:\|(.+))?$/;
 				/**
 				 * matches[0]: "abc#ee|ff"
@@ -71,15 +71,15 @@ export class PostHandler {
 				 *
 				 * matches[3]: ff | undefined
 				 */
-				const matches = link[2].match(pattern);
+				const matches = obLink[2].match(pattern);
 				if (matches === null) {
 					// actually this should never happen
 					// because match[1] always has value
 					console.log(
-						"Invalid link " + link[0] + " in " + post.tFile.basename
+						"Invalid link " + obLink[0] + " in " + post.tFile.basename
 					);
-					new Notice("Invalid link " + link[0]);
-					throw new Error("Invalid link " + link[0]);
+					new Notice("Invalid link " + obLink[0]);
+					throw new Error("Invalid link " + obLink[0]);
 				}
 				if (!matches[1]) {
 					// link to the same file
@@ -90,33 +90,34 @@ export class PostHandler {
 				const linkNote = await this.findNote(matches[1]);
 				if (linkNote === undefined) {
 					// link to a file that does not exist
-					const error = `file not found for link ${link[0]} in ${post.tFile.basename},\nusing ${link[2]} as plain text`;
+					const error = `file not found for link ${obLink[0]} in ${post.tFile.basename},\nusing ${obLink[2]} as plain text`;
 					console.log(error);
 					new Notice(error);
-					return link[0];
+					return obLink[0];
 				} else if (linkNote === null) {
 					// link to a file that neither a post nor an image
 					return matches[3] ? matches[3] : matches[0];
 				} else if (linkNote instanceof TFile) {
 					// link to an image
-					let image_url = await this.imgHandler.handleImage(linkNote);
+					const image_url = await this.imgHandler.handleImage(linkNote);
 					return `![image](${image_url})`;
 				} else {
 					const linkFrontmatter = linkNote.frontmatter;
 					const slug =
-						linkFrontmatter.slug +
-						(matches[2] ? `#${matches[2]}` : "");
+						linkFrontmatter.slug + (matches[2] ? `#${matches[2]}` : "");
 					const linkTitle = matches[3]
 						? matches[3]
 						: matches[2]
-							? linkFrontmatter.title + "#" + matches[2]
-							: linkFrontmatter.title;
+						? linkFrontmatter.title + "#" + matches[2]
+						: linkFrontmatter.title;
 					return `[${linkTitle}](/post/${slug})`;
 				}
 			})
 		);
 
 		let article = post.article;
+		const imgReplacedArt = this.replaceImageLinks(post, obLinks, stdLinks);
+		this.modifyImageLinks(post.tFile, imgReplacedArt);
 		obLinks.forEach((link, i) => {
 			article = article.replace(link[0], stdLinks[i]);
 		});
@@ -124,16 +125,39 @@ export class PostHandler {
 		return article;
 	}
 
-	private async handleTags(frontmatter: Frontmatter) {
+	private replaceImageLinks(
+		post: Post,
+		obLinks: RegExpMatchArray[],
+		stdLinks: string[]
+	): string {
+		let article = post.article;
+		obLinks.forEach((obLink, i) => {
+			if (stdLinks[i].startsWith("![image]")) {
+				article = article.replace(obLink[0], stdLinks[i]);
+			}
+		});
+		return (
+			`---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + article.trim()
+		);
+	}
+
+	private async modifyImageLinks(
+		file: TFile,
+		replaced_article: string
+	): Promise<void> {
+		this.vault.modify(file, replaced_article);
+	}
+
+	private handleTags(frontmatter: Frontmatter): Frontmatter {
 		if (!("tags" in frontmatter)) return frontmatter;
-		let tags = frontmatter.tags;
+		const tags = frontmatter.tags;
 		if (typeof tags === "string") {
 			if (tags.indexOf("/") == 0) return frontmatter;
 			frontmatter.tags = tags.split("/")[-1];
 			return frontmatter;
 		} else if (Array.isArray(tags)) {
-			let newTags: string[] = [];
-			for (let tag of tags) {
+			const newTags: string[] = [];
+			for (const tag of tags) {
 				// console.log(tag.split("/")[tag.split("/").length-1])
 				newTags.push(tag.split("/")[tag.split("/").length - 1]);
 			}
@@ -143,7 +167,9 @@ export class PostHandler {
 		return frontmatter;
 	}
 
-	private async findNote(link: string): Promise<Post | TFile | null | undefined> {
+	private async findNote(
+		link: string
+	): Promise<Post | TFile | null | undefined> {
 		for (const post of this.postsOb) {
 			if (post.tFile.basename === link) return post;
 		}
