@@ -4,6 +4,7 @@ import Ob2StaticPlugin from "@/main";
 import { StaticExporterSettings } from "@/type";
 
 export const DEFAULT_SETTINGS: StaticExporterSettings = {
+	post_prefix: "post/",
 	easyimage_api_endpoint: "https://yourdomain/api/index.php",
 	easyimage_api_key: "",
 	build: {
@@ -202,6 +203,23 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 					settings.uploader.git.pat = value;
 					await this.plugin.saveSettings();
 				})
+			);
+
+		new Setting(containerEl).setHeading().setName("Post Settings");
+		new Setting(containerEl)
+			.setName("Post Prefix")
+			.setDesc(
+				`The prefix of the post URL with trailing slash. Default to 'post/'.
+				e.g. A link to a note with slug 'abc' will be rendered as '/post/abc'.`
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("post/")
+					.setValue(settings.post_prefix)
+					.onChange(async (value) => {
+						settings.post_prefix = value;
+						await this.plugin.saveSettings();
+					})
 			);
 
 		new Setting(containerEl).setHeading().setName("Easyimage API");

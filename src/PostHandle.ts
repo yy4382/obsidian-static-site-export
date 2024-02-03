@@ -84,7 +84,7 @@ export default class PostHandler {
 				if (!matches[1]) {
 					// link to the same file
 					const encodedTitle = encodeURIComponent(matches[2]);
-					const linkPrefix = `post/${post.frontmatter.slug}/`;
+					const linkPrefix = `${this.settings.post_prefix}${post.frontmatter.slug}/`;
 					const linkTitle = matches[3] ? matches[3] : matches[2];
 					return `[${linkTitle}](/${linkPrefix}#${encodedTitle})`;
 				}
@@ -112,7 +112,7 @@ export default class PostHandler {
 						: matches[2]
 						? linkFrontmatter.title + "#" + matches[2]
 						: linkFrontmatter.title;
-					return `[${linkTitle}](/post/${slug})`;
+					return `[${linkTitle}](/${this.settings.post_prefix}${slug})`;
 				}
 			})
 		);

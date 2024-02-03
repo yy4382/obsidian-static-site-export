@@ -14,6 +14,7 @@ export interface Post {
 }
 
 export interface StaticExporterSettings {
+	post_prefix: string;
 	easyimage_api_endpoint: string;
 	easyimage_api_key: string;
 	build: {
