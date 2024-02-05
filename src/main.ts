@@ -89,7 +89,6 @@ export default class Ob2StaticPlugin extends Plugin {
 			this.app.vault
 		);
 		const postsHexo = await postHandler.normalize();
-		console.log(postsHexo);
 
 		new Notice(`Process complete,\n Start uploading (${postsHexo.length})`);
 

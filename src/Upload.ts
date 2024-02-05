@@ -30,7 +30,6 @@ export default class Uploader {
 				},
 			});
 		} else if (settings.uploader.type === "git") {
-			console.log("git");
 			// this.fs = new FS();
 		}
 	}
@@ -72,12 +71,14 @@ export default class Uploader {
 				)
 			) {
 				// HTTP status code is not in the 2xx range, indicating an error
-				console.log(data.$metadata.httpStatusCode);
+				console.error(
+					"HTTP status code is not in the 2xx range, but " +
+						data.$metadata.httpStatusCode
+				);
 				new Notice("Error while uploading post");
 				throw new Error("Error while uploading post");
 			}
 		} catch (err) {
-			console.log(err);
 			new Notice("Error while uploading post");
 			throw new Error("Error while uploading post");
 		}

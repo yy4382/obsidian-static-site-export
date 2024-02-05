@@ -68,7 +68,6 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 			.setName("S3 Post Uploader")
 			.setDesc("Or S3 compatible API");
 
-		console.log(settings.uploader.s3.endpoint);
 		new Setting(containerEl)
 			// .setDisabled(settings.uploader.type !== "s3")
 			.setName("S3 API ENDPOINT")
@@ -157,11 +156,14 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 							new Notice("Test success");
 						} else {
 							// HTTP status code is not in the 2xx range, indicating an error
-							console.log(data.$metadata.httpStatusCode);
+							console.error(
+								"HTTP status code is not in the 2xx range, but" +
+									data.$metadata.httpStatusCode
+							);
 							new Notice("Test failed");
 						}
 					} catch (err) {
-						console.log(err);
+						console.error(err);
 						new Notice("Test failed");
 					}
 				})

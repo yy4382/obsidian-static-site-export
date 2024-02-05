@@ -57,7 +57,6 @@ export default class PostHandler {
 		 * obLink[2]: "abc"
 		 */
 		const obLinks = [...post.article.matchAll(regex)];
-		// console.log(obLinks);
 
 		const stdLinks: string[] = await Promise.all(
 			obLinks.map(async (obLink) => {
@@ -75,7 +74,7 @@ export default class PostHandler {
 				if (matches === null) {
 					// actually this should never happen
 					// because match[1] always has value
-					console.log(
+					console.warn(
 						"Invalid link " + obLink[0] + " in " + post.tFile.basename
 					);
 					new Notice("Invalid link " + obLink[0]);
@@ -92,7 +91,7 @@ export default class PostHandler {
 				if (linkNote === undefined) {
 					// link to a file that does not exist
 					const error = `file not found for link ${obLink[0]} in ${post.tFile.basename},\nusing ${obLink[2]} as plain text`;
-					console.log(error);
+					console.warn(error);
 					new Notice(error);
 					return obLink[0];
 				} else if (linkNote === null) {
@@ -160,10 +159,8 @@ export default class PostHandler {
 		} else if (Array.isArray(tags)) {
 			const newTags: string[] = [];
 			for (const tag of tags) {
-				// console.log(tag.split("/")[tag.split("/").length-1])
 				newTags.push(tag.split("/")[tag.split("/").length - 1]);
 			}
-			// console.log(newTags)
 			frontmatter.tags = newTags;
 		}
 		return frontmatter;
