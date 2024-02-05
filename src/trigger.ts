@@ -10,13 +10,18 @@ import {Notice} from 'obsidian';
  * @param {string} eventType - The type of event to trigger.
  * @returns {Promise<void>} - A promise that resolves when the event is triggered successfully.
  */
-export async function triggerGitHubDispatchEvent(token: string, owner: string, repo: string, eventType: string) {
+export async function triggerGitHubDispatchEvent(
+	token: string,
+	owner: string,
+	repo: string,
+	eventType: string
+): Promise<void> {
 	const url = `https://api.github.com/repos/${owner}/${repo}/dispatches`;
 
 	const headers = {
-		'Accept': 'application/vnd.github+json',
-		'Authorization': `Bearer ${token}`,
-		'X-GitHub-Api-Version': '2022-11-28',
+		Accept: "application/vnd.github+json",
+		Authorization: `Bearer ${token}`,
+		"X-GitHub-Api-Version": "2022-11-28",
 	};
 
 	const data = {
@@ -28,7 +33,7 @@ export async function triggerGitHubDispatchEvent(token: string, owner: string, r
 		// console.log('GitHub dispatch event triggered:', response);
 		new Notice('GitHub dispatch event triggered');
 	} catch (error) {
-		console.error('Error triggering GitHub dispatch event:', error);
-		new Notice('Error triggering GitHub dispatch event');
+		console.error("Error triggering GitHub dispatch event:", error);
+		new Notice("Error triggering GitHub dispatch event");
 	}
 }

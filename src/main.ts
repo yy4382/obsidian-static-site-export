@@ -12,7 +12,7 @@ export default class Ob2StaticPlugin extends Plugin {
 	postsOb: Post[];
 	uploader: Uploader;
 
-	async onload() {
+	async onload(): Promise<void> {
 		await this.loadSettings();
 
 		// This creates an icon in the left ribbon.
@@ -69,12 +69,12 @@ export default class Ob2StaticPlugin extends Plugin {
 		this.addSettingTab(new Ob2StaticSettingTab(this.app, this));
 	}
 
-	onunload() {}
+	onunload(): void {}
 
 	/**
 	 * Processes the notes and uploads them to the specified S3 bucket.
 	 */
-	async process() {
+	async process(): Promise<void> {
 		this.uploader = new Uploader(this.settings);
 
 		this.allTFiles = this.app.vault.getFiles();
@@ -98,8 +98,8 @@ export default class Ob2StaticPlugin extends Plugin {
 
 	async ValidatePost(tFile: TFile): Promise<Post | null> {
 		if (tFile.extension !== "md") return null;
-		let noteContent = await this.app.vault.cachedRead(tFile);
-		const frontmatter = await this.getFrontmatter(noteContent);
+		const noteContent = await this.app.vault.cachedRead(tFile);
+		const frontmatter = this.getFrontmatter(noteContent);
 		if (frontmatter?.published === true) {
 			return {
 				tFile: tFile,
@@ -110,18 +110,18 @@ export default class Ob2StaticPlugin extends Plugin {
 		return null;
 	}
 
-	async getFrontmatter(noteContent: string): Promise<Frontmatter | null> {
+	getFrontmatter(noteContent: string): Frontmatter | null {
 		if (!noteContent.startsWith("---")) return null;
 
 		const frontmatterText = noteContent.split("---")[1];
 		return YAML.parse(frontmatterText) as Frontmatter;
 	}
 
-	async loadSettings() {
+	async loadSettings(): Promise<void> {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
-	async saveSettings() {
+	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 	}
 }

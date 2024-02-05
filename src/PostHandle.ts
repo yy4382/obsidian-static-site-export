@@ -87,7 +87,7 @@ export default class PostHandler {
 					const linkTitle = matches[3] ? matches[3] : matches[2];
 					return `[${linkTitle}](/${linkPrefix}#${encodedTitle})`;
 				}
-				const linkNote = await this.findNote(matches[1]);
+				const linkNote = this.findNote(matches[1]);
 				if (linkNote === undefined) {
 					// link to a file that does not exist
 					const error = `file not found for link ${obLink[0]} in ${post.tFile.basename},\nusing ${obLink[2]} as plain text`;
@@ -142,10 +142,10 @@ export default class PostHandler {
 		);
 	}
 
-	private async modifyImageLinks(
+	private modifyImageLinks(
 		file: TFile,
 		replaced_article: string
-	): Promise<void> {
+	): void{
 		this.vault.modify(file, replaced_article);
 	}
 
@@ -166,9 +166,9 @@ export default class PostHandler {
 		return frontmatter;
 	}
 
-	private async findNote(
+	private findNote(
 		link: string
-	): Promise<Post | TFile | null | undefined> {
+	): Post | TFile | null | undefined {
 		for (const post of this.postsOb) {
 			if (post.tFile.basename === link) return post;
 		}

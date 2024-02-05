@@ -17,13 +17,13 @@ export default class ImageHandler {
 	 * @param file - The image file to handle.
 	 * @returns The URL of the image.
 	 */
-	async handleImage(file: TFile) {
+	async handleImage(file: TFile): Promise<string> {
 		const image_url = await this.uploadEasyImage(file);
 		return image_url;
 	}
 
 	private async uploadEasyImage(tFile: TFile): Promise<string> {
-		let imgBuf = await this.vault.readBinary(tFile);
+		const imgBuf = await this.vault.readBinary(tFile);
 		const blob = new Blob([imgBuf], { type: `image/${tFile.extension}` });
 
 		const form = new FormData();
