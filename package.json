@@ -24,7 +24,6 @@
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.484.0",
-		"axios": "^1.6.3",
 		"form-data": "^4.0.0",
 		"yaml": "^2.3.4"
 	}

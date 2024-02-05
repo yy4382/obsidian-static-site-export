@@ -1,5 +1,4 @@
-import axios from 'axios';
-import {Notice} from 'obsidian';
+import { Notice, requestUrl } from "obsidian";
 
 /**
  * Triggers a GitHub dispatch event.
@@ -29,9 +28,13 @@ export async function triggerGitHubDispatchEvent(
 	};
 
 	try {
-		const response = await axios.post(url, data, {headers: headers});
-		// console.log('GitHub dispatch event triggered:', response);
-		new Notice('GitHub dispatch event triggered');
+		await requestUrl({
+			url: url,
+			method: "POST",
+			body: JSON.stringify(data),
+			headers: headers,
+		});
+		new Notice("GitHub dispatch event triggered");
 	} catch (error) {
 		console.error("Error triggering GitHub dispatch event:", error);
 		new Notice("Error triggering GitHub dispatch event");
