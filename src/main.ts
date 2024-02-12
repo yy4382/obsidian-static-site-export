@@ -8,7 +8,6 @@ import Uploader from "@/Upload";
 
 export default class Ob2StaticPlugin extends Plugin {
 	settings: StaticExporterSettings;
-	allTFiles: TFile[];
 	postsOb: Post[];
 	uploader: Uploader;
 
@@ -18,11 +17,26 @@ export default class Ob2StaticPlugin extends Plugin {
 		// This creates an icon in the left ribbon.
 		this.addRibbonIcon(
 			"file-up",
-			"Static Site MD Export",
+			"Current file - Static Site MD Export",
 			async (evt: MouseEvent) => {
 				// Called when the user clicks the icon.
 				new Notice("Starting process");
-				await this.process();
+				const tFiles = [this.app.workspace.getActiveFile() as TFile];
+				if (tFiles[0] === null) {
+					new Notice("No file active");
+					return;
+				}
+				await this.process(tFiles);
+			}
+		);
+		this.addRibbonIcon(
+			"folder-up",
+			"All validate files - Static Site MD Export",
+			async (evt: MouseEvent) => {
+				// Called when the user clicks the icon.
+				new Notice("Starting process");
+				const tFiles = this.app.vault.getFiles();
+				await this.process(tFiles);
 			}
 		);
 		if (this.settings.build.enable) {
@@ -51,16 +65,19 @@ export default class Ob2StaticPlugin extends Plugin {
 	/**
 	 * Processes the notes and uploads them to the specified S3 bucket.
 	 */
-	async process(): Promise<void> {
+	async process(tFiles: TFile[]): Promise<void> {
 		this.uploader = new Uploader(this.settings);
 
-		this.allTFiles = this.app.vault.getFiles();
 		const validRe = await Promise.all(
-			this.allTFiles.map((post) => this.ValidatePost(post))
+			tFiles.map((post) => this.ValidatePost(post))
 		);
 		this.postsOb = validRe.filter((post) => post !== null) as Post[];
+		if (this.postsOb.length === 0) {
+			new Notice("No valid posts found");
+			return;
+		}
 		const postHandler = new PostHandler(
-			this.allTFiles,
+			tFiles,
 			this.postsOb,
 			this.settings,
 			this.app.vault
