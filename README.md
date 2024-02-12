@@ -27,6 +27,8 @@ The “Trigger GitHub Action deploy” button does:
 
 - Send a webhook to Github so that it knows it's time to build.
 
+If you delete a file in your vault, your file in S3 or git won't be deleted. You need to go there to delete them. Similarly, if you change the slug of a post, you need to delete the markdown file in s3 or git with the original slug as name.
+
 [^1]: currently only support front matter key "slug" as slug. Making this configurable is in process.
 
 ## Usage
