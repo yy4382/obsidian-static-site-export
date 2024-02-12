@@ -42,29 +42,6 @@ export default class Ob2StaticPlugin extends Plugin {
 			);
 		}
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: "trigger-static-export",
-			name: "Trigger Static Export",
-			callback: () => {
-				this.process();
-			},
-		});
-		if (this.settings.build.enable) {
-			this.addCommand({
-				id: "trigger-github-dispatch-event",
-				name: "Trigger GitHub Action build",
-				callback: () => {
-					triggerGitHubDispatchEvent(
-						this.settings.build.webhook_token,
-						this.settings.build.user,
-						this.settings.build.repo,
-						this.settings.build.event_type
-					);
-				},
-			});
-		}
-
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new Ob2StaticSettingTab(this.app, this));
 	}
