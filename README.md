@@ -39,32 +39,6 @@ If you delete a file in your vault, your file in S3 or git won't be deleted. You
 4. Use whatever you like to generate these files into a static site. Hexo or Hugo are good choice for static site generation.
 5. If you use GitHub actions to build/deploy, try using the "Trigger GitHub Action deploy" button to simplify workflow: update your site without leaving obsidian!
 
-## Roadmap
-
-### feature
-
-- [x] enable upload with git
-- [ ] enable export to local file
-- [ ] put obsidian format tags into front matter
-- [x] more setting choices
-- [x] modify image links
-- [ ] handle slug: support customize slug (? maybe not)
-- [ ] support for other image hosting service (? maybe not)
-
-### enhance
-
-- [ ] Better notice system
-- [ ] Use modal to confirm modify image links
-
-### docs
-
-- [x] write a readme
-- [ ] usage example of github actions
-
-### publish
-
-- [x] create PR to release plugin to community plugins
-
 ## Contributing
 
 Contributions are welcome! Please submit a pull request with your changes.
