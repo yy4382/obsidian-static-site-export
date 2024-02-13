@@ -8,8 +8,6 @@ import Uploader from "@/Upload";
 
 export default class Ob2StaticPlugin extends Plugin {
 	settings: StaticExporterSettings;
-	postsOb: Post[];
-	uploader: Uploader;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -66,19 +64,19 @@ export default class Ob2StaticPlugin extends Plugin {
 	 * Processes the notes and uploads them to the specified S3 bucket.
 	 */
 	async process(tFiles: TFile[]): Promise<void> {
-		this.uploader = new Uploader(this.settings);
+		const uploader = new Uploader(this.settings);
 
 		const validRe = await Promise.all(
 			tFiles.map((post) => this.ValidatePost(post))
 		);
-		this.postsOb = validRe.filter((post) => post !== null) as Post[];
-		if (this.postsOb.length === 0) {
+		const postsOb = validRe.filter((post) => post !== null) as Post[];
+		if (postsOb.length === 0) {
 			new Notice("No valid posts found");
 			return;
 		}
 		const postHandler = new PostHandler(
 			tFiles,
-			this.postsOb,
+			postsOb,
 			this.settings,
 			this.app.vault
 		);
@@ -86,7 +84,7 @@ export default class Ob2StaticPlugin extends Plugin {
 
 		new Notice(`Process complete,\n Start uploading (${postsHexo.length})`);
 
-		await this.uploader.upload(postsHexo);
+		await uploader.upload(postsHexo);
 		new Notice("Upload complete");
 	}
 
