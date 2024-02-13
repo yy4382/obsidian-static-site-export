@@ -1,6 +1,6 @@
-// import { clone, commit, push } from "isomorphic-git";
-// import http from "isomorphic-git/http/web/";
-// import { FS } from "@isomorphic-git/lightning-fs";
+import * as git from "isomorphic-git";
+import http from "isomorphic-git/http/web/";
+import FS from "@isomorphic-git/lightning-fs";
 import * as YAML from "yaml";
 import { Notice } from "obsidian";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
@@ -14,7 +14,6 @@ import { Post, StaticExporterSettings } from "@/type";
  * @param settings - The settings of the plugin.
  */
 export default class Uploader {
-	// private fs: FS;
 	private settings: StaticExporterSettings;
 	private client: S3Client;
 
@@ -29,8 +28,6 @@ export default class Uploader {
 					secretAccessKey: settings.uploader.s3.secret_access_key,
 				},
 			});
-		} else if (settings.uploader.type === "git") {
-			// this.fs = new FS();
 		}
 	}
 
@@ -43,8 +40,7 @@ export default class Uploader {
 	 */
 	async upload(posts: Post[]): Promise<void> {
 		if (this.settings.uploader.type === "git") {
-			await this.save_to_fs();
-			// await this.push_to_git();
+			await this.fs_upload(posts);
 		} else if (this.settings.uploader.type === "s3") {
 			await Promise.all(posts.map((post) => this.upload_to_s3(post)));
 		}
@@ -83,21 +79,69 @@ export default class Uploader {
 			throw new Error("Error while uploading post");
 		}
 	}
-	private async save_to_fs(): Promise<void> {
-		// const fs = this.fs;
-		// await clone({
-		// 	fs,
-		// 	http,
-		// 	dir: "/posts",
-		// 	corsProxy: "https://cors.isomorphic-git.org",
-		// 	url: this.settings.uploader.git!.repo,
-		// 	ref: this.settings.uploader.git!.branch,
-		// 	singleBranch: true,
-		// 	depth: 1,
-		// 	onAuth: () => ({
-		// 		username: this.settings.uploader.git!.username,
-		// 		password: this.settings.uploader.git!.pat,
-		// 	}),
-		// });
+	private async fs_upload(posts: Post[]): Promise<void> {
+		const fs = new FS("fs");
+		const config = this.settings.uploader.git;
+		const dir = "/posts";
+
+		new Notice("Cloning from remote...");
+		await git.clone({
+			fs,
+			http,
+			dir: dir,
+			corsProxy: "https://cors.isomorphic-git.org",
+			url: config.repo,
+			ref: config.branch,
+			singleBranch: true,
+			depth: 1,
+			onAuth: () => ({
+				username: config.username,
+				password: config.pat,
+			}),
+		});
+		new Notice("Cloning complete");
+
+		for (const post of posts) {
+			const postContent =
+				`---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + post.article;
+			const filename =
+				"slug" in post.frontmatter
+					? post.frontmatter.slug
+					: post.tFile.basename;
+			fs.writeFile(`${dir}/${filename}.md`, postContent, undefined, () => {});
+			git.add({ fs, dir: dir, filepath: `${filename}.md` });
+		}
+		const sha = await git.commit({
+			fs,
+			dir: dir,
+			message: config.commit_message,
+			author: {
+				name: config.author.name,
+				email: config.author.email,
+			},
+		});
+		new Notice(`New commit SHA: ${sha.slice(0, 7)}, start pushing...`);
+
+		await git.push({
+			fs,
+			http,
+			dir: dir,
+			corsProxy: "https://cors.isomorphic-git.org",
+			url: config.repo,
+			ref: config.branch,
+			onAuth: () => ({
+				username: config.username,
+				password: config.pat,
+			}),
+		});
+		new Notice("Push complete, cleaning up...");
+		fs.readdir(dir, undefined, (err, files) => {
+			if (err) {
+				throw err;
+			}
+			for (const file of files) {
+				fs.unlink(`${dir}/${file}`, undefined, () => {});
+			}
+		});
 	}
 }

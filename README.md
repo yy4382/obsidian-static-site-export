@@ -43,7 +43,7 @@ If you delete a file in your vault, your file in S3 or git won't be deleted. You
 
 ### feature
 
-- [ ] enable upload with git
+- [x] enable upload with git
 - [ ] enable export to local file
 - [ ] put obsidian format tags into front matter
 - [x] more setting choices

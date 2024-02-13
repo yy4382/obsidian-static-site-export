@@ -21,6 +21,11 @@ export const DEFAULT_SETTINGS: StaticExporterSettings = {
 			branch: "",
 			username: "",
 			pat: "",
+			author: {
+				name: "Obsidian Exporter",
+				email: "",
+			},
+			commit_message: "upd",
 		},
 		s3: {
 			endpoint: "",
@@ -205,6 +210,36 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 					settings.uploader.git.pat = value;
 					await this.plugin.saveSettings();
 				})
+			);
+		new Setting(containerEl).setName("Git Commit Message").addText((text) =>
+			text
+				.setValue(settings.uploader.git.commit_message)
+				.onChange(async (value) => {
+					settings.uploader.git.commit_message = value;
+					await this.plugin.saveSettings();
+				})
+		);
+		new Setting(containerEl)
+			.setName("Git Author Name")
+			.setDesc("Used as 'git config user.name'")
+			.addText((text) =>
+				text
+					.setValue(settings.uploader.git.author.name)
+					.onChange(async (value) => {
+						settings.uploader.git.author.name = value;
+						await this.plugin.saveSettings();
+					})
+			);
+		new Setting(containerEl)
+			.setName("Git Author Email")
+			.setDesc("Used as 'git config user.email'")
+			.addText((text) =>
+				text
+					.setValue(settings.uploader.git.author.email)
+					.onChange(async (value) => {
+						settings.uploader.git.author.email = value;
+						await this.plugin.saveSettings();
+					})
 			);
 
 		new Setting(containerEl).setHeading().setName("Post Settings");

@@ -24,7 +24,9 @@
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.484.0",
+		"@isomorphic-git/lightning-fs": "^4.6.0",
 		"form-data": "^4.0.0",
+		"isomorphic-git": "^1.25.3",
 		"yaml": "^2.3.4"
 	}
 }

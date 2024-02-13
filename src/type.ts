@@ -31,6 +31,11 @@ export interface StaticExporterSettings {
 			branch: string;
 			username: string;
 			pat: string;
+			author: {
+				name: string;
+				email: string;
+			};
+			commit_message: string;
 		};
 		s3: {
 			endpoint: string;
