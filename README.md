@@ -12,7 +12,7 @@ Images will be automatically uploaded to a image hosting service. More choices w
 
 > Wiki links to non-image files won't be changed!
 
-The "Static Site MD Export" button on panel (Ribbon) does:
+The "All validate files - Static Site MD Export" button on panel (Ribbon) does:
 
 1. Get all the notes in vault with front matter "published" and the value is true (bool value).
 2. Transform them into general markdown format:
@@ -21,7 +21,9 @@ The "Static Site MD Export" button on panel (Ribbon) does:
    2. Target note is not "published": remove the [[]] and leave the content in it untouched.
    3. Target note is image file: upload it to a image hosting site, and replace the image link. The image file won't be modified. Currently only Easyimage is supported.
 4. Change tags in front matter into 1-depth format (discarding content before /)
-5. Upload the markdown files onto S3 (or S3 compatible services). Other choices such as uploading to git repo or downloading to local machine is currently being developed.
+5. Upload the markdown files onto S3 or commit via git. A setting item controls the behavior.
+
+The "Current file - Static Site MD Export" does similar staff, but only validate the current note, not all the notes.
 
 The “Trigger GitHub Action deploy” button does:
 
