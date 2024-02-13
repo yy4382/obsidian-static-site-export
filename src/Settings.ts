@@ -2,6 +2,7 @@ import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import { S3Client, ListObjectsCommand } from "@aws-sdk/client-s3";
 import Ob2StaticPlugin from "@/main";
 import { StaticExporterSettings } from "@/type";
+import { triggerGitHubDispatchEvent } from "./trigger";
 
 export const DEFAULT_SETTINGS: StaticExporterSettings = {
 	post_prefix: "post/",
@@ -291,11 +292,28 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Enable Webhook Deploy")
-			.setDesc("Reload this plugin to take effect")
 			.addToggle((toggle) =>
 				toggle.setValue(settings.build.enable).onChange(async (value) => {
 					settings.build.enable = value;
 					await this.plugin.saveSettings();
+					if (settings.build.enable){
+						this.plugin.addRibbonIcon(
+							"play-square",
+							"Trigger GitHub Action deploy",
+							(evt: MouseEvent) => {
+								// Called when the user clicks the icon.
+								triggerGitHubDispatchEvent(
+									this.settings.build.webhook_token,
+									this.settings.build.user,
+									this.settings.build.repo,
+									this.settings.build.event_type
+								);
+								new Notice("Sent GitHub Action deploy Webhook");
+							}
+						).setAttribute("id","rb-sse-deploy-icon");
+					} else{
+						document.getElementById("rb-sse-deploy-icon")?.remove();
+					}
 					this.display();
 				})
 			);

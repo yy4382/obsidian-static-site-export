@@ -37,21 +37,23 @@ export default class Ob2StaticPlugin extends Plugin {
 				await this.process(tFiles);
 			}
 		);
-		if (this.settings.build.enable) {
-			this.addRibbonIcon(
-				"play-square",
-				"Trigger GitHub Action deploy",
-				(evt: MouseEvent) => {
-					// Called when the user clicks the icon.
-					triggerGitHubDispatchEvent(
-						this.settings.build.webhook_token,
-						this.settings.build.user,
-						this.settings.build.repo,
-						this.settings.build.event_type
-					);
-					new Notice("Sent GitHub Action deploy Webhook");
-				}
-			);
+		this.addRibbonIcon(
+			"play-square",
+			"Trigger GitHub Action deploy",
+			(evt: MouseEvent) => {
+				// Called when the user clicks the icon.
+				triggerGitHubDispatchEvent(
+					this.settings.build.webhook_token,
+					this.settings.build.user,
+					this.settings.build.repo,
+					this.settings.build.event_type
+				);
+				new Notice("Sent GitHub Action deploy Webhook");
+			}
+		).setAttribute("id","rb-sse-deploy-icon");
+
+		if (!this.settings.build.enable){
+			document.getElementById("rb-sse-deploy-icon")?.remove();
 		}
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
