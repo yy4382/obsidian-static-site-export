@@ -16,6 +16,7 @@ import { Post, StaticExporterSettings } from "@/type";
 export default class Uploader {
 	private settings: StaticExporterSettings;
 	private client: S3Client;
+	static indexedDBName = "ssMdExporter";
 
 	constructor(settings: StaticExporterSettings) {
 		this.settings = settings;
@@ -79,28 +80,99 @@ export default class Uploader {
 			throw new Error("Error while uploading post");
 		}
 	}
+	/**
+	 * Clears the IndexedDB used by the uploader.
+	 */
+	static clearIndexedDB(): void {
+		const request = indexedDB.deleteDatabase(Uploader.indexedDBName);
+		request.onsuccess = (e: IDBVersionChangeEvent): void => {
+			if (e.oldVersion === 0) {
+				new Notice("DB already cleared");
+			} else {
+				new Notice("Database (used by git upload) cleared");
+			}
+		};
+		request.onerror = (e): void => {
+			console.error("Couldn't delete database", e);
+			new Notice("Couldn't delete database; see console for details");
+		};
+	}
+
 	private async fs_upload(posts: Post[]): Promise<void> {
-		const fs = new FS("fs");
+		const fs = new FS(Uploader.indexedDBName);
 		const config = this.settings.uploader.git;
 		const dir = "/posts";
 
-		new Notice("Cloning from remote...");
-		await git.clone({
-			fs,
-			http,
-			dir: dir,
-			corsProxy: "https://cors.isomorphic-git.org",
-			url: config.repo,
-			ref: config.branch,
-			singleBranch: true,
-			depth: 1,
-			onAuth: () => ({
-				username: config.username,
-				password: config.pat,
-			}),
-		});
-		new Notice("Cloning complete");
+		enum RepoStat {
+			NOT_EXIST,
+			NOT_UP_TO_DATE,
+			UP_TO_DATE,
+		}
 
+		let repoStat: RepoStat | undefined = undefined;
+
+		new Notice("Start uploading to git, try using locally cached repo...");
+		// Check if the repo is already cloned and up to date
+		let localSha = "";
+		try {
+			localSha = await git.resolveRef({
+				fs,
+				dir: dir,
+				ref: "refs/heads/" + config.branch,
+			});
+		} catch (e) {
+			repoStat = RepoStat.NOT_EXIST;
+		}
+
+		if (repoStat === undefined) {
+			// repo already exists. Check if the remote is up to date
+			const remoteRef = await git.listServerRefs({
+				http,
+				corsProxy: "https://cors.isomorphic-git.org",
+				url: config.repo,
+				prefix: "refs/heads/" + config.branch,
+				onAuth: () => ({
+					username: config.username,
+					password: config.pat,
+				}),
+			});
+
+			const remoteSha = remoteRef[0]?.oid;
+
+			if (remoteSha === localSha) {
+				new Notice("Up to date, skip cloning");
+				repoStat = RepoStat.UP_TO_DATE;
+			} else {
+				repoStat = RepoStat.NOT_UP_TO_DATE;
+			}
+		}
+
+		if (repoStat !== RepoStat.UP_TO_DATE) {
+			// Don't exist/Not up to date. Clean up and clone the repo.
+			if (repoStat === RepoStat.NOT_EXIST)
+				new Notice("Repo not found, cloning..."); // Not exist
+			else new Notice("Repo not up to date, cleaning up and cloning..."); // Not up to date
+
+			Uploader.clearIndexedDB();
+
+			await git.clone({
+				fs,
+				http,
+				dir: dir,
+				corsProxy: "https://cors.isomorphic-git.org",
+				url: config.repo,
+				ref: config.branch,
+				singleBranch: true,
+				depth: 1,
+				onAuth: () => ({
+					username: config.username,
+					password: config.pat,
+				}),
+			});
+			new Notice("Cloning complete");
+		}
+
+		// Write the posts to the file system and commit them
 		for (const post of posts) {
 			const postContent =
 				`---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + post.article;
@@ -122,6 +194,7 @@ export default class Uploader {
 		});
 		new Notice(`New commit SHA: ${sha.slice(0, 7)}, start pushing...`);
 
+		// Push the changes to the remote
 		await git.push({
 			fs,
 			http,
@@ -134,14 +207,6 @@ export default class Uploader {
 				password: config.pat,
 			}),
 		});
-		new Notice("Push complete, cleaning up...");
-		fs.readdir(dir, undefined, (err, files) => {
-			if (err) {
-				throw err;
-			}
-			for (const file of files) {
-				fs.unlink(`${dir}/${file}`, undefined, () => {});
-			}
-		});
+		new Notice("Push complete");
 	}
 }

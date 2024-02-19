@@ -3,6 +3,7 @@ import { S3Client, ListObjectsCommand } from "@aws-sdk/client-s3";
 import Ob2StaticPlugin from "@/main";
 import { StaticExporterSettings } from "@/type";
 import { triggerGitHubDispatchEvent } from "./trigger";
+import Uploader from "./Upload";
 
 export const DEFAULT_SETTINGS: StaticExporterSettings = {
 	post_prefix: "post/",
@@ -242,6 +243,15 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 							await this.plugin.saveSettings();
 						})
 				);
+
+			new Setting(containerEl)
+				.setName("Delete cache")
+				.setDesc("Delete the local cache database used by git")
+				.addButton((button) => {
+					button.setButtonText("Delete").onClick(() => {
+						Uploader.clearIndexedDB();
+					});
+				});
 		}
 		new Setting(containerEl).setHeading().setName("Post Settings");
 		new Setting(containerEl)
