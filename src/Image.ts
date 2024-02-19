@@ -52,3 +52,5 @@ export default class ImageHandler {
 		}
 	}
 }
+
+// test commit
