@@ -119,3 +119,4 @@ export default class Ob2StaticPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 }
+//gb-test
