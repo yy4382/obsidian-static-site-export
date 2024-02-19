@@ -1,11 +1,12 @@
+export default async function form2buffer(
+	requestData: FormData
+): Promise<{ contentType: string; body: ArrayBuffer }> {
+	const boundary = `----formdata-0${`${Math.floor(Math.random() * 1e11)}`.padStart(11, "0")}`;
 
-export default async function form2buffer(requestData: FormData): Promise<{ contentType: string; body: ArrayBuffer }>{
-  const boundary = `----formdata-0${`${Math.floor(Math.random() * 1e11)}`.padStart(11, '0')}`
-
-  return {
-    contentType: `multipart/form-data; boundary=${boundary}`,
-    body: await buildMultipartBody(requestData, boundary).arrayBuffer(),
-  }
+	return {
+		contentType: `multipart/form-data; boundary=${boundary}`,
+		body: await buildMultipartBody(requestData, boundary).arrayBuffer(),
+	};
 }
 
 function buildMultipartBody(formData: FormData, boundary: string): Blob {
@@ -13,7 +14,7 @@ function buildMultipartBody(formData: FormData, boundary: string): Blob {
 	return composeMultipartBodyFrom(multipartPieces, boundary);
 }
 
-function multipartPiecesFrom(formData: FormData): Array<string | Blob>{
+function multipartPiecesFrom(formData: FormData): Array<string | Blob> {
 	const pieces: Array<string | Blob> = [];
 	formData.forEach((content, name) => {
 		if (typeof content === "string") {
@@ -43,13 +44,16 @@ function fileToFormDataSection(formName: string, file: File): Blob {
 function composeMultipartBodyFrom(
 	multipartPieces: (string | Blob)[],
 	boundaryLine: string
-):Blob {
+): Blob {
 	const allPieces = addMultipartBoundaries(multipartPieces, boundaryLine);
 	const singleBlob = new Blob(addLineBreaks(allPieces));
 	return singleBlob;
 }
 
-function addMultipartBoundaries(multipartPieces: BlobPart[], boundary: string): BlobPart[]{
+function addMultipartBoundaries(
+	multipartPieces: BlobPart[],
+	boundary: string
+): BlobPart[] {
 	const boundaryLine = `--${boundary}`;
 	const allPieces = multipartPieces.flatMap((p) => [boundaryLine, p]);
 	const finalBoundaryLine = `--${boundary}--`;

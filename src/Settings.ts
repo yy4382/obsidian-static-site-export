@@ -306,22 +306,24 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 				toggle.setValue(settings.build.enable).onChange(async (value) => {
 					settings.build.enable = value;
 					await this.plugin.saveSettings();
-					if (settings.build.enable){
-						this.plugin.addRibbonIcon(
-							"play-square",
-							"Trigger GitHub Action deploy",
-							(evt: MouseEvent) => {
-								// Called when the user clicks the icon.
-								triggerGitHubDispatchEvent(
-									this.settings.build.webhook_token,
-									this.settings.build.user,
-									this.settings.build.repo,
-									this.settings.build.event_type
-								);
-								new Notice("Sent GitHub Action deploy Webhook");
-							}
-						).setAttribute("id","rb-sse-deploy-icon");
-					} else{
+					if (settings.build.enable) {
+						this.plugin
+							.addRibbonIcon(
+								"play-square",
+								"Trigger GitHub Action deploy",
+								(evt: MouseEvent) => {
+									// Called when the user clicks the icon.
+									triggerGitHubDispatchEvent(
+										this.settings.build.webhook_token,
+										this.settings.build.user,
+										this.settings.build.repo,
+										this.settings.build.event_type
+									);
+									new Notice("Sent GitHub Action deploy Webhook");
+								}
+							)
+							.setAttribute("id", "rb-sse-deploy-icon");
+					} else {
 						document.getElementById("rb-sse-deploy-icon")?.remove();
 					}
 					this.display();

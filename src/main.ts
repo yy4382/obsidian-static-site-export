@@ -50,9 +50,9 @@ export default class Ob2StaticPlugin extends Plugin {
 				);
 				new Notice("Sent GitHub Action deploy Webhook");
 			}
-		).setAttribute("id","rb-sse-deploy-icon");
+		).setAttribute("id", "rb-sse-deploy-icon");
 
-		if (!this.settings.build.enable){
+		if (!this.settings.build.enable) {
 			document.getElementById("rb-sse-deploy-icon")?.remove();
 		}
 
@@ -66,7 +66,7 @@ export default class Ob2StaticPlugin extends Plugin {
 	 * Processes the notes and uploads them to the specified S3 bucket.
 	 */
 	async process(tFiles: TFile[]): Promise<void> {
-		const uploader = new Uploader(this.app,this.settings);
+		const uploader = new Uploader(this.app, this.settings);
 
 		const validRe = await Promise.all(
 			tFiles.map((post) => this.ValidatePost(post))

@@ -109,8 +109,8 @@ export default class PostHandler {
 					const linkTitle = matches[3]
 						? matches[3]
 						: matches[2]
-						? linkFrontmatter.title + "#" + matches[2]
-						: linkFrontmatter.title;
+							? linkFrontmatter.title + "#" + matches[2]
+							: linkFrontmatter.title;
 					return `[${linkTitle}](/${this.settings.post_prefix}${slug})`;
 				}
 			})
@@ -138,14 +138,15 @@ export default class PostHandler {
 			}
 		});
 		return (
-			`---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + article.trim() + `\n`
+			`---\n` +
+			YAML.stringify(post.frontmatter) +
+			`---\n\n` +
+			article.trim() +
+			`\n`
 		);
 	}
 
-	private modifyImageLinks(
-		file: TFile,
-		replaced_article: string
-	): void{
+	private modifyImageLinks(file: TFile, replaced_article: string): void {
 		this.vault.modify(file, replaced_article);
 	}
 
@@ -166,9 +167,7 @@ export default class PostHandler {
 		return frontmatter;
 	}
 
-	private findNote(
-		link: string
-	): Post | TFile | null | undefined {
+	private findNote(link: string): Post | TFile | null | undefined {
 		for (const post of this.postsOb) {
 			if (post.tFile.basename === link) return post;
 		}

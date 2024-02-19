@@ -104,7 +104,7 @@ export default class Uploader {
 				// HTTP status code is not in the 2xx range, indicating an error
 				console.error(
 					"HTTP status code is not in the 2xx range, but " +
-						data.$metadata.httpStatusCode,
+						data.$metadata.httpStatusCode
 				);
 				new Notice("Error while uploading post");
 				throw new Error("Error while uploading post");
