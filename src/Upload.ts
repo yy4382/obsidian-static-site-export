@@ -2,9 +2,41 @@ import * as git from "isomorphic-git";
 import http from "isomorphic-git/http/web/";
 import FS from "@isomorphic-git/lightning-fs";
 import * as YAML from "yaml";
-import { Notice } from "obsidian";
+import { App, Notice, Modal } from "obsidian";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Post, StaticExporterSettings } from "@/type";
+
+export class GitFinishModal extends Modal {
+	branch: string;
+	link: string;
+	constructor(app: App, config: { branch: string; repo: string }) {
+		super(app);
+		this.branch = config.branch;
+		if (config.repo.endsWith(".git")) {
+			this.link = config.repo.slice(0, -4) + "/tree/" + this.branch;
+		} else {
+			this.link = config.repo + "/tree/" + this.branch;
+		}
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+		contentEl.createEl("h2", { text: "Exporter: Upload Complete" });
+		contentEl.createEl("p", {
+			text: `The posts have been uploaded to "${this.branch}" branch.`,
+		});
+		contentEl.createEl("a", {
+			text: "View on GitHub",
+			cls: "button",
+			attr: { href: this.link },
+		});
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}
 
 /**
  * Every batch of upload need a uploader instance.
@@ -17,9 +49,11 @@ export default class Uploader {
 	private settings: StaticExporterSettings;
 	private client: S3Client;
 	static indexedDBName = "ssMdExporter";
+	app: App;
 
-	constructor(settings: StaticExporterSettings) {
+	constructor(app: App, settings: StaticExporterSettings) {
 		this.settings = settings;
+		this.app = app;
 		if (settings.uploader.type === "s3") {
 			this.client = new S3Client({
 				endpoint: settings.uploader.s3.endpoint,
@@ -70,7 +104,7 @@ export default class Uploader {
 				// HTTP status code is not in the 2xx range, indicating an error
 				console.error(
 					"HTTP status code is not in the 2xx range, but " +
-						data.$metadata.httpStatusCode
+						data.$metadata.httpStatusCode,
 				);
 				new Notice("Error while uploading post");
 				throw new Error("Error while uploading post");
@@ -154,7 +188,7 @@ export default class Uploader {
 			else new Notice("Repo not up to date, cleaning up and cloning..."); // Not up to date
 
 			Uploader.clearIndexedDB();
-
+			fs.init(Uploader.indexedDBName);
 			await git.clone({
 				fs,
 				http,
@@ -169,7 +203,7 @@ export default class Uploader {
 					password: config.pat,
 				}),
 			});
-			new Notice("Cloning complete");
+			new Notice("Clone complete");
 		}
 
 		// Write the posts to the file system and commit them
@@ -207,6 +241,6 @@ export default class Uploader {
 				password: config.pat,
 			}),
 		});
-		new Notice("Push complete");
+		new GitFinishModal(this.app, config).open();
 	}
 }

@@ -66,7 +66,7 @@ export default class Ob2StaticPlugin extends Plugin {
 	 * Processes the notes and uploads them to the specified S3 bucket.
 	 */
 	async process(tFiles: TFile[]): Promise<void> {
-		const uploader = new Uploader(this.settings);
+		const uploader = new Uploader(this.app,this.settings);
 
 		const validRe = await Promise.all(
 			tFiles.map((post) => this.ValidatePost(post))
