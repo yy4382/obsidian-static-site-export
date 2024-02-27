@@ -52,7 +52,10 @@ export default class Ob2StaticPlugin extends Plugin {
 		).setAttribute("id", "rb-sse-deploy-icon");
 
 		if (!this.settings.build.enable) {
-			document.getElementById("rb-sse-deploy-icon")?.remove();
+			// Don't know why i need to use setTimeout to remove the icon
+			setTimeout(() => {
+				document.getElementById("rb-sse-deploy-icon")?.remove();
+			}, 100);
 		}
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -92,7 +95,8 @@ export default class Ob2StaticPlugin extends Plugin {
 	async ValidatePost(tFile: TFile): Promise<Post | null> {
 		if (tFile.extension !== "md") return null;
 		const noteContent = await this.app.vault.cachedRead(tFile);
-		const frontmatter = this.app.metadataCache.getFileCache(tFile)?.frontmatter as Frontmatter;
+		const frontmatter = this.app.metadataCache.getFileCache(tFile)
+			?.frontmatter as Frontmatter;
 		if (frontmatter?.published === true) {
 			return {
 				tFile: tFile,
