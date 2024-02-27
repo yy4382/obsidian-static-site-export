@@ -1,5 +1,4 @@
-import * as YAML from "yaml";
-import { Notice, TFile, Vault } from "obsidian";
+import { Notice, TFile, Vault, stringifyYaml } from "obsidian";
 import { Frontmatter, Post, StaticExporterSettings } from "@/type";
 import ImageHandler from "@/Image";
 
@@ -139,7 +138,7 @@ export default class PostHandler {
 		});
 		return (
 			`---\n` +
-			YAML.stringify(post.frontmatter) +
+			stringifyYaml(post.frontmatter) +
 			`---\n\n` +
 			article.trim() +
 			`\n`

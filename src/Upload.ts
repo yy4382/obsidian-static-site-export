@@ -1,8 +1,7 @@
 import * as git from "isomorphic-git";
 import http from "isomorphic-git/http/web/";
 import FS from "@isomorphic-git/lightning-fs";
-import * as YAML from "yaml";
-import { App, Notice, Modal } from "obsidian";
+import { App, Notice, Modal, stringifyYaml } from "obsidian";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Post, StaticExporterSettings } from "@/type";
 
@@ -83,7 +82,7 @@ export default class Uploader {
 
 	private async upload_to_s3(post: Post): Promise<void> {
 		const postContent =
-			`---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + post.article;
+			`---\n` + stringifyYaml(post.frontmatter) + `---\n\n` + post.article;
 		const filename =
 			"slug" in post.frontmatter ? post.frontmatter.slug : post.tFile.basename;
 		const config = {
@@ -209,7 +208,7 @@ export default class Uploader {
 		// Write the posts to the file system and commit them
 		for (const post of posts) {
 			const postContent =
-				`---\n` + YAML.stringify(post.frontmatter) + `---\n\n` + post.article;
+				`---\n` + stringifyYaml(post.frontmatter) + `---\n\n` + post.article;
 			const filename =
 				"slug" in post.frontmatter
 					? post.frontmatter.slug
