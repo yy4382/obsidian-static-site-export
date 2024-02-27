@@ -7,7 +7,7 @@ import Uploader from "./Upload";
 
 export const DEFAULT_SETTINGS: StaticExporterSettings = {
 	post_prefix: "post/",
-	easyimage_api_endpoint: "https://yourdomain/api/index.php",
+	easyimage_api_endpoint: "",
 	easyimage_api_key: "",
 	build: {
 		enable: false,
@@ -58,7 +58,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setHeading().setName("Post Uploader");
 
 		new Setting(containerEl)
-			.setName("Uploader Type")
+			.setName("Uploader type")
 			.addDropdown((dropdown) => {
 				dropdown
 					.addOption("git", "Git")
@@ -74,8 +74,8 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 		if (settings.uploader.type === "s3") {
 			new Setting(containerEl)
 				// .setDisabled(settings.uploader.type !== "s3")
-				.setName("S3 API ENDPOINT")
-				.setDesc("no bucket name in it")
+				.setName("Endpoint")
+				.setDesc("Don't put bucket name in it.")
 				.addText((text) =>
 					text
 						.setPlaceholder("endpoint")
@@ -87,8 +87,8 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 				);
 
 			new Setting(containerEl)
-				.setName("S3 API Region")
-				.setDesc("us-east-1")
+				.setName("Region")
+				.setDesc("Try us-east-1 if you don't know.")
 				.addText((text) =>
 					text
 						.setPlaceholder("endpoint")
@@ -99,7 +99,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						})
 				);
 			new Setting(containerEl)
-				.setName("S3 API Bucket")
+				.setName("Bucket")
 				.setDesc("Bucket name")
 				.addText((text) =>
 					text
@@ -111,8 +111,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						})
 				);
 			new Setting(containerEl)
-				.setName("S3 API Access Key ID")
-				.setDesc("Access Key ID")
+				.setName("Access key ID")
 				.addText((text) =>
 					text
 						.setPlaceholder("access_key_id")
@@ -123,8 +122,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						})
 				);
 			new Setting(containerEl)
-				.setName("S3 API Secret Access Key")
-				.setDesc("Secret Access Key")
+				.setName("Secret access key")
 				.addText((text) =>
 					text
 						.setPlaceholder("secret_access_key")
@@ -135,8 +133,8 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						})
 				);
 			new Setting(containerEl)
-				.setName("S3 API Test")
-				.setDesc("Test S3 API")
+				.setName("Test")
+				.setDesc("Test S3 API connection.")
 				.addButton((button) =>
 					button.setButtonText("Test").onClick(async () => {
 						const client = new S3Client({
@@ -175,7 +173,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 		}
 		if (settings.uploader.type === "git") {
 			new Setting(containerEl)
-				.setName("Git Repo")
+				.setName("Repo link")
 				.setDesc("Full URL of the git repository")
 				.addText((text) =>
 					text.setValue(settings.uploader.git.repo).onChange(async (value) => {
@@ -185,7 +183,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 				);
 
 			new Setting(containerEl)
-				.setName("Git Branch")
+				.setName("Branch")
 				.setDesc("Branch name")
 				.addText((text) =>
 					text
@@ -196,7 +194,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						})
 				);
 
-			new Setting(containerEl).setName("Git Username").addText((text) =>
+			new Setting(containerEl).setName("GitHub username").addText((text) =>
 				text
 					.setValue(settings.uploader.git.username)
 					.onChange(async (value) => {
@@ -205,7 +203,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 					})
 			);
 			new Setting(containerEl)
-				.setName("Git Personal Access Token")
+				.setName("GitHub personal access token")
 				.setDesc("Password when 'git login'")
 				.addText((text) =>
 					text.setValue(settings.uploader.git.pat).onChange(async (value) => {
@@ -213,7 +211,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 				);
-			new Setting(containerEl).setName("Git Commit Message").addText((text) =>
+			new Setting(containerEl).setName("Git commit message").addText((text) =>
 				text
 					.setValue(settings.uploader.git.commit_message)
 					.onChange(async (value) => {
@@ -222,7 +220,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 					})
 			);
 			new Setting(containerEl)
-				.setName("Git Author Name")
+				.setName("Author name")
 				.setDesc("Used as 'git config user.name'")
 				.addText((text) =>
 					text
@@ -233,7 +231,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						})
 				);
 			new Setting(containerEl)
-				.setName("Git Author Email")
+				.setName("Author email")
 				.setDesc("Used as 'git config user.email'")
 				.addText((text) =>
 					text
@@ -253,9 +251,9 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 					});
 				});
 		}
-		new Setting(containerEl).setHeading().setName("Post Settings");
+		new Setting(containerEl).setHeading().setName("Post settings");
 		new Setting(containerEl)
-			.setName("Post Prefix")
+			.setName("Post prefix")
 			.setDesc(
 				`The prefix of the post URL with trailing slash. Default to 'post/'.
 				e.g. A link to a note with slug 'abc' will be rendered as '/post/abc'.`
@@ -274,10 +272,10 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Easyimage API endpoint")
-			.setDesc("https://yourdomain/api/index.php")
+			.setDesc("Should look like https://example.com/api/index.php")
 			.addText((text) =>
 				text
-					.setPlaceholder("https://yourdomain/api/index.php")
+					.setPlaceholder("https://example.com/api/index.php")
 					.setValue(settings.easyimage_api_endpoint)
 					.onChange(async (value) => {
 						settings.easyimage_api_endpoint = value;
@@ -285,7 +283,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 					})
 			);
 
-		new Setting(containerEl).setName("Easyimage API Key").addText((text) =>
+		new Setting(containerEl).setName("Easyimage API key").addText((text) =>
 			text
 				.setPlaceholder("easyimage_api_key")
 				.setValue(settings.easyimage_api_key)
@@ -297,11 +295,11 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setHeading()
-			.setName("Deploy Webhook")
+			.setName("Deploy webhook")
 			.setDesc("Trigger a GitHub Action to run.");
 
 		new Setting(containerEl)
-			.setName("Enable Webhook Deploy")
+			.setName("Enable webhook deploy")
 			.addToggle((toggle) =>
 				toggle.setValue(settings.build.enable).onChange(async (value) => {
 					settings.build.enable = value;
@@ -319,7 +317,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 										this.settings.build.repo,
 										this.settings.build.event_type
 									);
-									new Notice("Sent GitHub Action deploy Webhook");
+									new Notice("Sent GitHub Action deploy webhook");
 								}
 							)
 							.setAttribute("id", "rb-sse-deploy-icon");
@@ -330,7 +328,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 				})
 			);
 		if (settings.build.enable) {
-			new Setting(containerEl).setName("Github User").addText((text) =>
+			new Setting(containerEl).setName("Github username").addText((text) =>
 				text
 					.setPlaceholder("username")
 					.setValue(settings.build.user)
@@ -339,7 +337,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
-			new Setting(containerEl).setName("Github Repo").addText((text) =>
+			new Setting(containerEl).setName("Github repo").addText((text) =>
 				text
 					.setPlaceholder("easyimage_api_key")
 					.setValue(settings.build.repo)
@@ -348,7 +346,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
-			new Setting(containerEl).setName("Github Webhook Token").addText((text) =>
+			new Setting(containerEl).setName("Github webhook token").addText((text) =>
 				text
 					.setPlaceholder("github_webhook_token")
 					.setValue(settings.build.webhook_token)
@@ -358,7 +356,7 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 					})
 			);
 			new Setting(containerEl)
-				.setName("Github Webhook Event Type")
+				.setName("Github webhook event type")
 				.addText((text) =>
 					text
 						.setPlaceholder("github_webhook_event_type")
