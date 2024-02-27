@@ -1,5 +1,4 @@
 import { Notice, Plugin, TFile } from "obsidian";
-import * as YAML from "yaml";
 import { Frontmatter, Post, StaticExporterSettings } from "@/type";
 import { DEFAULT_SETTINGS, Ob2StaticSettingTab } from "@/Settings";
 import { triggerGitHubDispatchEvent } from "@/trigger";
@@ -93,7 +92,7 @@ export default class Ob2StaticPlugin extends Plugin {
 	async ValidatePost(tFile: TFile): Promise<Post | null> {
 		if (tFile.extension !== "md") return null;
 		const noteContent = await this.app.vault.cachedRead(tFile);
-		const frontmatter = this.getFrontmatter(noteContent);
+		const frontmatter = this.app.metadataCache.getFileCache(tFile)?.frontmatter as Frontmatter;
 		if (frontmatter?.published === true) {
 			return {
 				tFile: tFile,
@@ -102,13 +101,6 @@ export default class Ob2StaticPlugin extends Plugin {
 			};
 		}
 		return null;
-	}
-
-	getFrontmatter(noteContent: string): Frontmatter | null {
-		if (!noteContent.startsWith("---")) return null;
-
-		const frontmatterText = noteContent.split("---")[1];
-		return YAML.parse(frontmatterText) as Frontmatter;
 	}
 
 	async loadSettings(): Promise<void> {
