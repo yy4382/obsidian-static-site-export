@@ -6,6 +6,5 @@
 	"description": "Export specific notes to general md for static site generator like Hugo, Hexo, Astro and more.",
 	"author": "Yunfi",
 	"authorUrl": "https://yfi.moe",
-	"fundingUrl": "",
 	"isDesktopOnly": false
 }
