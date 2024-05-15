@@ -24,10 +24,10 @@
 		"typescript": "4.7.4"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.484.0",
+		"@aws-sdk/client-s3": "^3.576.0",
 		"@isomorphic-git/lightning-fs": "^4.6.0",
 		"form-data": "^4.0.0",
-		"isomorphic-git": "^1.25.3"
+		"isomorphic-git": "^1.25.10"
 	},
-	"packageManager": "pnpm@8.15.3+sha256.fc4a49bd609550a41e14d20efbce802a4b892aa4cac877322de2f0924f122991"
+	"packageManager": "pnpm@9.1.1+sha256.9551e803dcb7a1839fdf5416153a844060c7bce013218ce823410532504ac10b"
 }
