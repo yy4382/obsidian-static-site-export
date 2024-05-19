@@ -1,7 +1,7 @@
 import * as git from "isomorphic-git";
 import http from "isomorphic-git/http/web/";
 import FS from "@isomorphic-git/lightning-fs";
-import { App, Notice, Modal, stringifyYaml } from "obsidian";
+import { App, Notice, Modal, stringifyYaml, Platform } from "obsidian";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Post, StaticExporterSettings } from "@/type";
 
@@ -132,6 +132,7 @@ export default class Uploader {
 	}
 
 	private async fs_upload(posts: Post[]): Promise<void> {
+		if (Platform.isIosApp) return;
 		const fs = new FS(Uploader.indexedDBName);
 		const config = this.settings.uploader.git;
 		const dir = "/posts";
