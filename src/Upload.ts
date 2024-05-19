@@ -132,7 +132,7 @@ export default class Uploader {
 	}
 
 	private async fs_upload(posts: Post[]): Promise<void> {
-		if (Platform.isIosApp) return;
+		// if (Platform.isIosApp) return;
 		const fs = new FS(Uploader.indexedDBName);
 		const config = this.settings.uploader.git;
 		const dir = "/posts";
@@ -158,91 +158,91 @@ export default class Uploader {
 			repoStat = RepoStat.NOT_EXIST;
 		}
 
-		if (repoStat === undefined) {
-			// repo already exists. Check if the remote is up to date
-			const remoteRef = await git.listServerRefs({
-				http,
-				corsProxy: "https://cors.isomorphic-git.org",
-				url: config.repo,
-				prefix: "refs/heads/" + config.branch,
-				onAuth: () => ({
-					username: config.username,
-					password: config.pat,
-				}),
-			});
+		// if (repoStat === undefined) {
+		// 	// repo already exists. Check if the remote is up to date
+		// 	const remoteRef = await git.listServerRefs({
+		// 		http,
+		// 		corsProxy: "https://cors.isomorphic-git.org",
+		// 		url: config.repo,
+		// 		prefix: "refs/heads/" + config.branch,
+		// 		onAuth: () => ({
+		// 			username: config.username,
+		// 			password: config.pat,
+		// 		}),
+		// 	});
 
-			const remoteSha = remoteRef[0]?.oid;
+		// 	const remoteSha = remoteRef[0]?.oid;
 
-			if (remoteSha === localSha) {
-				new Notice("Up to date, skip cloning");
-				repoStat = RepoStat.UP_TO_DATE;
-			} else {
-				repoStat = RepoStat.NOT_UP_TO_DATE;
-			}
-		}
+		// 	if (remoteSha === localSha) {
+		// 		new Notice("Up to date, skip cloning");
+		// 		repoStat = RepoStat.UP_TO_DATE;
+		// 	} else {
+		// 		repoStat = RepoStat.NOT_UP_TO_DATE;
+		// 	}
+		// }
 
-		if (repoStat !== RepoStat.UP_TO_DATE) {
-			// Don't exist/Not up to date. Clean up and clone the repo.
-			if (repoStat === RepoStat.NOT_EXIST)
-				new Notice("Repo not found, cloning..."); // Not exist
-			else new Notice("Repo not up to date, cleaning up and cloning..."); // Not up to date
+		// if (repoStat !== RepoStat.UP_TO_DATE) {
+		// 	// Don't exist/Not up to date. Clean up and clone the repo.
+		// 	if (repoStat === RepoStat.NOT_EXIST)
+		// 		new Notice("Repo not found, cloning..."); // Not exist
+		// 	else new Notice("Repo not up to date, cleaning up and cloning..."); // Not up to date
 
-			Uploader.clearIndexedDB();
-			fs.init(Uploader.indexedDBName);
-			await git.clone({
-				fs,
-				http,
-				dir: dir,
-				corsProxy: "https://cors.isomorphic-git.org",
-				url: config.repo,
-				ref: config.branch,
-				singleBranch: true,
-				depth: 1,
-				onAuth: () => ({
-					username: config.username,
-					password: config.pat,
-				}),
-			});
-			new Notice("Clone complete");
-		}
+		// 	Uploader.clearIndexedDB();
+		// 	// fs.init(Uploader.indexedDBName);
+		// 	await git.clone({
+		// 		fs,
+		// 		http,
+		// 		dir: dir,
+		// 		corsProxy: "https://cors.isomorphic-git.org",
+		// 		url: config.repo,
+		// 		ref: config.branch,
+		// 		singleBranch: true,
+		// 		depth: 1,
+		// 		onAuth: () => ({
+		// 			username: config.username,
+		// 			password: config.pat,
+		// 		}),
+		// 	});
+		// 	new Notice("Clone complete");
+		// }
 
-		// Write the posts to the file system and commit them
-		for (const post of posts) {
-			const postContent =
-				`---\n` + stringifyYaml(post.frontmatter) + `---\n\n` + post.article;
-			const filename =
-				"slug" in post.frontmatter
-					? post.frontmatter.slug
-					: post.tFile.basename;
-			fs.writeFile(`${dir}/${filename}.md`, postContent, undefined, (err) => {
-				new Notice(err.message);
-			});
-			git.add({ fs, dir: dir, filepath: `${filename}.md` });
-		}
-		const sha = await git.commit({
-			fs,
-			dir: dir,
-			message: config.commit_message,
-			author: {
-				name: config.author.name,
-				email: config.author.email,
-			},
-		});
-		new Notice(`New commit SHA: ${sha.slice(0, 7)}, start pushing...`);
+		// // Write the posts to the file system and commit them
+		// for (const post of posts) {
+		// 	const postContent =
+		// 		`---\n` + stringifyYaml(post.frontmatter) + `---\n\n` + post.article;
+		// 	const filename =
+		// 		"slug" in post.frontmatter
+		// 			? post.frontmatter.slug
+		// 			: post.tFile.basename;
+		// 	fs.writeFile(`${dir}/${filename}.md`, postContent, undefined, (err) => {
+		// 		new Notice(err?.message || "Write failed");
+		// 	});
+		// 	git.add({ fs, dir: dir, filepath: `${filename}.md` });
+		// }
+		// const sha = await git.commit({
+		// 	fs,
+		// 	dir: dir,
+		// 	message: config.commit_message,
+		// 	author: {
+		// 		name: config.author.name,
+		// 		email: config.author.email,
+		// 	},
+		// });
+		// new Notice(`New commit SHA: ${sha.slice(0, 7)}, start pushing...`);
 
-		// Push the changes to the remote
-		await git.push({
-			fs,
-			http,
-			dir: dir,
-			corsProxy: "https://cors.isomorphic-git.org",
-			url: config.repo,
-			ref: config.branch,
-			onAuth: () => ({
-				username: config.username,
-				password: config.pat,
-			}),
-		});
-		new GitFinishModal(this.app, config).open();
+		// // Push the changes to the remote
+		// await git.push({
+		// 	fs,
+		// 	http,
+		// 	dir: dir,
+		// 	corsProxy: "https://cors.isomorphic-git.org",
+		// 	url: config.repo,
+		// 	ref: config.branch,
+		// 	onAuth: () => ({
+		// 		username: config.username,
+		// 		password: config.pat,
+		// 	}),
+		// });
+		// new GitFinishModal(this.app, config).open();
 	}
 }
