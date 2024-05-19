@@ -142,27 +142,27 @@ export default class Uploader {
 			NOT_UP_TO_DATE,
 			UP_TO_DATE,
 		}
-		// try {
-		// 	await fs.promises.mkdir(dir, undefined);
-		// } catch (e) {
-		// 	// console.error(e);
-		// 	new Notice("Error while creating directory");
-		// 	return;
-		// }
-		// console.log(await fs.promises.readdir(dir));
+		try {
+			await fs.promises.mkdir(dir, undefined);
+		} catch (e) {
+			// console.error(e);
+			new Notice("Error while creating directory");
+			return;
+		}
+		console.log(await fs.promises.readdir(dir));
 		let repoStat: RepoStat | undefined = undefined;
 
-		await git.clone({
-			fs,
-			http,
-			dir,
-			corsProxy: 'https://cors.isomorphic-git.org',
-			url: 'https://github.com/isomorphic-git/isomorphic-git',
-			ref: 'main',
-			singleBranch: true,
-			depth: 1,
-		});
-		console.log(await fs.promises.readdir(dir));		
+		// await git.clone({
+		// 	fs,
+		// 	http,
+		// 	dir,
+		// 	corsProxy: 'https://cors.isomorphic-git.org',
+		// 	url: 'https://github.com/isomorphic-git/isomorphic-git',
+		// 	ref: 'main',
+		// 	singleBranch: true,
+		// 	depth: 1,
+		// });
+		// console.log(await fs.promises.readdir(dir));		
 
 		new Notice("Start uploading to git, try using locally cached repo...");
 		// Check if the repo is already cloned and up to date
