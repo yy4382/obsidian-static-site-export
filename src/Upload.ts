@@ -1,9 +1,8 @@
 import * as git from "isomorphic-git";
-import http from "isomorphic-git/http/web/";
-import FS from "@isomorphic-git/lightning-fs";
 import { App, Notice, Modal, stringifyYaml, Platform } from "obsidian";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Post, StaticExporterSettings } from "@/type";
+import { http } from "./utils/http";
 import { MyAdapter } from "./utils/adapter";
 
 export class GitFinishModal extends Modal {
@@ -146,6 +145,7 @@ export default class Uploader {
 			return;
 		}
 		console.log(await fs.promises.readdir(dir));
+		fs.rmdir(dir, { options: { recursive: true } });
 
 		// enum RepoStat {
 		// 	NOT_EXIST,
@@ -154,18 +154,27 @@ export default class Uploader {
 		// }
 
 		// let repoStat: RepoStat | undefined = undefined;
-
+		// try {
 		await git.clone({
 			fs,
 			http,
 			dir,
-			corsProxy: 'https://cors.isomorphic-git.org',
-			url: 'https://github.com/yy4382/obsidian-static-site-export',
-			ref: 'main',
+			corsProxy: "https://cors.isomorphic-git.org",
+			url: "https://github.com/yy4382/obsidian-static-site-export",
+			ref: "main",
 			singleBranch: true,
 			depth: 1,
 		});
-		console.log(await fs.promises.readdir(dir));
+		// } catch (e) {
+		// 	if (e instanceof git.Errors.AlreadyExistsError) {
+		// 		console.error("Repository already exists");
+		// 		new Notice("Repository already exists");
+		// 		fs.unlink(dir);
+		// 	} else {
+		// 		throw e;
+		// 	}
+		// }
+		// console.log(await fs.promises.readdir(dir));
 
 		// new Notice("Start uploading to git, try using locally cached repo...");
 		// Check if the repo is already cloned and up to date
