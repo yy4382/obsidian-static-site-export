@@ -103,12 +103,12 @@ export default class Uploader {
 				// HTTP status code is not in the 2xx range, indicating an error
 				console.error(
 					"HTTP status code is not in the 2xx range, but " +
-						data.$metadata.httpStatusCode
+						data.$metadata.httpStatusCode,
 				);
 				new Notice("Error while uploading post");
 				throw new Error("Error while uploading post");
 			}
-		} catch (err) {
+		} catch {
 			new Notice("Error while uploading post");
 			throw new Error("Error while uploading post");
 		}
@@ -153,7 +153,7 @@ export default class Uploader {
 				dir: dir,
 				ref: "refs/heads/" + config.branch,
 			});
-		} catch (e) {
+		} catch {
 			repoStat = RepoStat.NOT_EXIST;
 		}
 
@@ -213,7 +213,9 @@ export default class Uploader {
 				"slug" in post.frontmatter
 					? post.frontmatter.slug
 					: post.tFile.basename;
-			fs.writeFile(`${dir}/${filename}.md`, postContent, undefined, () => {});
+			fs.writeFile(`${dir}/${filename}.md`, postContent, undefined, (err) => {
+				new Notice(err.message);
+			});
 			git.add({ fs, dir: dir, filepath: `${filename}.md` });
 		}
 		const sha = await git.commit({

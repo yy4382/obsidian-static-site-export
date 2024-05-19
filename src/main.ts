@@ -15,7 +15,7 @@ export default class Ob2StaticPlugin extends Plugin {
 		this.addRibbonIcon(
 			"file-up",
 			"Current file - Static Site MD Export",
-			async (evt: MouseEvent) => {
+			async () => {
 				// Called when the user clicks the icon.
 				new Notice("Starting process");
 				const tFiles = [this.app.workspace.getActiveFile() as TFile];
@@ -24,32 +24,28 @@ export default class Ob2StaticPlugin extends Plugin {
 					return;
 				}
 				await this.process(tFiles);
-			}
+			},
 		);
 		this.addRibbonIcon(
 			"folder-up",
 			"All validate files - Static Site MD Export",
-			async (evt: MouseEvent) => {
+			async () => {
 				// Called when the user clicks the icon.
 				new Notice("Starting process");
 				const tFiles = this.app.vault.getFiles();
 				await this.process(tFiles);
-			}
+			},
 		);
-		this.addRibbonIcon(
-			"play-square",
-			"Trigger GitHub Action deploy",
-			(evt: MouseEvent) => {
-				// Called when the user clicks the icon.
-				triggerGitHubDispatchEvent(
-					this.settings.build.webhook_token,
-					this.settings.build.user,
-					this.settings.build.repo,
-					this.settings.build.event_type
-				);
-				new Notice("Sent GitHub Action deploy Webhook");
-			}
-		).setAttribute("id", "rb-sse-deploy-icon");
+		this.addRibbonIcon("play-square", "Trigger GitHub Action deploy", () => {
+			// Called when the user clicks the icon.
+			triggerGitHubDispatchEvent(
+				this.settings.build.webhook_token,
+				this.settings.build.user,
+				this.settings.build.repo,
+				this.settings.build.event_type,
+			);
+			new Notice("Sent GitHub Action deploy Webhook");
+		}).setAttribute("id", "rb-sse-deploy-icon");
 
 		if (!this.settings.build.enable) {
 			// Don't know why i need to use setTimeout to remove the icon
@@ -62,6 +58,7 @@ export default class Ob2StaticPlugin extends Plugin {
 		this.addSettingTab(new Ob2StaticSettingTab(this.app, this));
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-empty-function -- This is a required function
 	onunload(): void {}
 
 	/**
@@ -71,7 +68,7 @@ export default class Ob2StaticPlugin extends Plugin {
 		const uploader = new Uploader(this.app, this.settings);
 
 		const validRe = await Promise.all(
-			tFiles.map((post) => this.ValidatePost(post))
+			tFiles.map((post) => this.ValidatePost(post)),
 		);
 		const postsOb = validRe.filter((post) => post !== null) as Post[];
 		if (postsOb.length === 0) {
@@ -82,7 +79,7 @@ export default class Ob2StaticPlugin extends Plugin {
 			tFiles,
 			postsOb,
 			this.settings,
-			this.app.vault
+			this.app.vault,
 		);
 		const postsHexo = await postHandler.normalize();
 

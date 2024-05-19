@@ -10,12 +10,12 @@ export default async function form2buffer(
 }
 
 function buildMultipartBody(formData: FormData, boundary: string): Blob {
-	const multipartPieces: Array<string | Blob> = multipartPiecesFrom(formData);
+	const multipartPieces: (string | Blob)[] = multipartPiecesFrom(formData);
 	return composeMultipartBodyFrom(multipartPieces, boundary);
 }
 
-function multipartPiecesFrom(formData: FormData): Array<string | Blob> {
-	const pieces: Array<string | Blob> = [];
+function multipartPiecesFrom(formData: FormData): (string | Blob)[] {
+	const pieces: (string | Blob)[] = [];
 	formData.forEach((content, name) => {
 		if (typeof content === "string") {
 			pieces.push(stringToFormDataSection(name, content));
