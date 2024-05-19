@@ -4,6 +4,7 @@ import FS from "@isomorphic-git/lightning-fs";
 import { App, Notice, Modal, stringifyYaml, Platform } from "obsidian";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Post, StaticExporterSettings } from "@/type";
+import { MyAdapter } from "./utils/adapter";
 
 export class GitFinishModal extends Modal {
 	branch: string;
@@ -133,15 +134,10 @@ export default class Uploader {
 
 	private async fs_upload(posts: Post[]): Promise<void> {
 		// if (Platform.isIosApp) return;
-		const fs = new FS(Uploader.indexedDBName);
+		const fs = new MyAdapter(this.app.vault);
 		const config = this.settings.uploader.git;
-		const dir = "/posts";
+		const dir = "/.posts";
 
-		enum RepoStat {
-			NOT_EXIST,
-			NOT_UP_TO_DATE,
-			UP_TO_DATE,
-		}
 		try {
 			await fs.promises.mkdir(dir, undefined);
 		} catch (e) {
@@ -150,21 +146,28 @@ export default class Uploader {
 			return;
 		}
 		console.log(await fs.promises.readdir(dir));
-		let repoStat: RepoStat | undefined = undefined;
 
-		// await git.clone({
-		// 	fs,
-		// 	http,
-		// 	dir,
-		// 	corsProxy: 'https://cors.isomorphic-git.org',
-		// 	url: 'https://github.com/isomorphic-git/isomorphic-git',
-		// 	ref: 'main',
-		// 	singleBranch: true,
-		// 	depth: 1,
-		// });
-		// console.log(await fs.promises.readdir(dir));		
+		// enum RepoStat {
+		// 	NOT_EXIST,
+		// 	NOT_UP_TO_DATE,
+		// 	UP_TO_DATE,
+		// }
 
-		new Notice("Start uploading to git, try using locally cached repo...");
+		// let repoStat: RepoStat | undefined = undefined;
+
+		await git.clone({
+			fs,
+			http,
+			dir,
+			corsProxy: 'https://cors.isomorphic-git.org',
+			url: 'https://github.com/yy4382/obsidian-static-site-export',
+			ref: 'main',
+			singleBranch: true,
+			depth: 1,
+		});
+		console.log(await fs.promises.readdir(dir));
+
+		// new Notice("Start uploading to git, try using locally cached repo...");
 		// Check if the repo is already cloned and up to date
 		// let localSha = "";
 		// try {
