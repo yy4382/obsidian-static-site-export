@@ -1,5 +1,14 @@
 # Static Site MD Exporter for Obsidian
 
+> [!WARNING]
+> **Not actively maintianed, Seeking New Maintainer**
+> 
+> This project is no longer actively maintained, because I don't use Obisidian for editing my blog posts.
+>
+> However, I believe the project still holds some value for others. If you're interested in becoming the new maintainer, I'm open to transferring repository ownership. To be considered, I'd appreciate seeing some contributions first, such as submitting a few pull requests.
+>
+> The plugin still works fine on the current version of Obsidian Desktop, so if you are a user, don't be frightened, and if you know how to write Typescript, please consider contribute to it!
+
 Integrate Obsidian into your blog writing process!
 
 Export notes with the `published: true` front matter into plain Markdown, so that you can use them for static site generators!
@@ -40,6 +49,10 @@ If you delete a file in your vault, your file in S3 or git won't be deleted. You
 3. Click the "Static Site MD Export" and it will automatically process and deploy md files to s3.
 4. Use whatever you like to generate these files into a static site. Hexo or Hugo are good choice for static site generation.
 5. If you use GitHub actions to build/deploy, try using the "Trigger GitHub Action deploy" button to simplify workflow: update your site without leaving obsidian!
+
+## Known Issues
+
+- Not working on Obsidian on iOS: Probably caused by the `lighting-fs` library, which is used for git upload.
 
 ## Contributing
 
