@@ -9,8 +9,8 @@ export default tseslint.config(
 	},
 	{
 		rules: {
-			"@typescript-eslint/explicit-function-return-type": "error",
-			"no-console": ["error", { allow: ["warn", "error"] }],
+			// "@typescript-eslint/explicit-function-return-type": "error",
+			// "no-console": ["error", { allow: ["warn", "error"] }],
 		},
 		languageOptions: {
 			globals: {

@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS, Ob2StaticSettingTab } from "@/Settings";
 import { triggerGitHubDispatchEvent } from "@/trigger";
 import PostHandler from "@/PostHandle";
 import Uploader from "@/Upload";
+import { normalize, readAndFilterValidPosts } from "./post";
 
 export default class Ob2StaticPlugin extends Plugin {
 	settings: StaticExporterSettings;
@@ -12,6 +13,20 @@ export default class Ob2StaticPlugin extends Plugin {
 		await this.loadSettings();
 
 		// This creates an icon in the left ribbon.
+		// this.addRibbonIcon(
+		// 	"file-up",
+		// 	"Current file - Static Site MD Export",
+		// 	async () => {
+		// 		// Called when the user clicks the icon.
+		// 		new Notice("Starting process");
+		// 		const tFiles = [this.app.workspace.getActiveFile() as TFile];
+		// 		if (tFiles[0] === null) {
+		// 			new Notice("No file active");
+		// 			return;
+		// 		}
+		// 		await this.process(tFiles);
+		// 	},
+		// );
 		this.addRibbonIcon(
 			"file-up",
 			"Current file - Static Site MD Export",
@@ -23,7 +38,14 @@ export default class Ob2StaticPlugin extends Plugin {
 					new Notice("No file active");
 					return;
 				}
-				await this.process(tFiles);
+				const post = (
+					await normalize(
+						await readAndFilterValidPosts(tFiles, this.app),
+						this.app,
+					)
+				)[0];
+
+				console.log(post.content, post.meta);
 			},
 		);
 		this.addRibbonIcon(
