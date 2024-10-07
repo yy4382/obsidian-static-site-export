@@ -13,23 +13,24 @@
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
-		"@eslint/js": "^9.3.0",
-		"@types/node": "^20.12.12",
+		"@eslint/js": "^9.12.0",
+		"@types/node": "^22.7.4",
 		"builtin-modules": "4.0.0",
-		"esbuild": "0.21.2",
-		"eslint": "^9.3.0",
-		"globals": "^15.2.0",
-		"obsidian": "1.5.7-1",
-		"prettier": "^3.2.5",
-		"tslib": "2.6.2",
-		"typescript": "5.4.5",
-		"typescript-eslint": "8.0.0-alpha.10"
+		"esbuild": "0.24.0",
+		"eslint": "^9.12.0",
+		"globals": "^15.10.0",
+		"obsidian": "1.7.2",
+		"prettier": "^3.3.3",
+		"tslib": "2.7.0",
+		"typescript": "5.6.2",
+		"typescript-eslint": "8.8.0"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "3.575.0",
+		"@aws-sdk/client-s3": "3.665.0",
 		"@isomorphic-git/lightning-fs": "^4.6.0",
 		"form-data": "^4.0.0",
-		"isomorphic-git": "^1.25.10"
+		"isomorphic-git": "^1.27.1",
+		"zod": "^3.23.8"
 	},
 	"packageManager": "pnpm@9.1.1+sha256.9551e803dcb7a1839fdf5416153a844060c7bce013218ce823410532504ac10b"
 }
