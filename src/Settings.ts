@@ -46,7 +46,7 @@ export const DEFAULT_SETTINGS: SSSettings = {
 			repo: "",
 			branch: "",
 			username: "",
-			targetPath: "/",
+			targetPath: "",
 			pat: "",
 			author: {
 				name: "Obsidian Exporter",
@@ -107,6 +107,18 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						.setValue(settings.uploader.git.branch)
 						.onChange(async (value) => {
 							settings.uploader.git.branch = value;
+							await this.plugin.saveSettings();
+						}),
+				);
+
+			new Setting(containerEl)
+				.setName("Target Path")
+				.setDesc("The target position of your posts, don't starts with /")
+				.addText((text) =>
+					text
+						.setValue(settings.uploader.git.targetPath)
+						.onChange(async (value) => {
+							settings.uploader.git.targetPath = value;
 							await this.plugin.saveSettings();
 						}),
 				);

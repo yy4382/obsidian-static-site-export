@@ -17,17 +17,26 @@ export const gitUpload = async (posts: Post[], config: GitUploadSettings) => {
 	await syncLocalRepo(g);
 
 	// Write the posts to the file system and commit them
+	g.fs.mkdir(`${LOCAL_REPO_DIR}${config.targetPath}`, undefined, (err) => {
+		if (err) {
+			console.error(err);
+		}
+	});
 	for (const post of posts) {
 		const { filename, content } = stringifyPost(post);
+		const filepath = config.targetPath + "/" + filename;
 		g.fs.writeFile(
-			`${LOCAL_REPO_DIR}/${filename}`,
+			`${LOCAL_REPO_DIR}/${filepath}`,
 			content,
 			undefined,
 			(err) => {
-				new Notice(err.message);
+				if (err) {
+					console.error(err);
+					new Notice(err.message);
+				}
 			},
 		);
-		await g.add(filename);
+		await g.add(filepath);
 	}
 	if (!(await g.haveChanges())) {
 		console.warn("Nothing to commit, worktree clean.");
@@ -36,8 +45,10 @@ export const gitUpload = async (posts: Post[], config: GitUploadSettings) => {
 	const sha = await g.commit();
 	console.log(sha);
 	new Notice(`New commit SHA: ${sha.slice(0, 7)}, start pushing...`);
-	await g.push();
+	const result = await g.push();
+	console.log(result);
 };
+
 const getGitOps = (config: GitUploadSettings) => {
 	const fs = new LightningFs(INDEX_DB_NAME);
 	const dir = LOCAL_REPO_DIR;
@@ -82,6 +93,7 @@ const getGitOps = (config: GitUploadSettings) => {
 
 		const changedFiles = matrix.filter((row) => {
 			const [_filepath, headStatus, workdirStatus, stageStatus] = row;
+			console.log(_filepath, headStatus, workdirStatus, stageStatus);
 			return headStatus !== workdirStatus || headStatus !== stageStatus;
 		});
 
@@ -128,6 +140,7 @@ const getGitOps = (config: GitUploadSettings) => {
 async function syncLocalRepo(g: GitOps) {
 	if (!(await needClone(g))) return;
 	clearIndexedDB();
+	g.fs.init(INDEX_DB_NAME);
 	await g.clone();
 }
 
