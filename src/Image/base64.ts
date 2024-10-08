@@ -1,11 +1,11 @@
-import { App, Reference, TFile } from "obsidian";
+import { Reference, TFile } from "obsidian";
 import { ImageTransformer } from "./base";
-import type { Post } from "@/post";
+import type { Post, TransformCtx } from "@/type";
 
 export class Base64Transformer extends ImageTransformer {
 	fileMap: Map<string, [string, string, TFile]>;
-	constructor(app: App) {
-		super(app);
+	constructor(ctx: TransformCtx) {
+		super(ctx);
 		this.fileMap = new Map<string, [string, string, TFile]>();
 	}
 	async onTransform(
@@ -14,12 +14,11 @@ export class Base64Transformer extends ImageTransformer {
 		targetTFile: TFile,
 	): Promise<string> {
 		if (this.fileMap.has(targetTFile.path)) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const tagName = this.fileMap.get(targetTFile.path)![0];
 			return `![${link.displayText ?? link.link}][${tagName}]`;
 		}
 		const tagName = `img${this.fileMap.size + 1}`;
-		const arraybuffer = await this.app.vault.readBinary(targetTFile);
+		const arraybuffer = await this.ctx.app.vault.readBinary(targetTFile);
 
 		// Convert arraybuffer to base64
 		const base64 = btoa(

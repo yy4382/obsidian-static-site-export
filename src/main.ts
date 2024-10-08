@@ -1,10 +1,11 @@
 import { Notice, Plugin, TFile } from "obsidian";
-import { Frontmatter, Post, StaticExporterSettings } from "@/type";
+import { StaticExporterSettings } from "@/type";
 import { DEFAULT_SETTINGS, Ob2StaticSettingTab } from "@/Settings";
-import { triggerGitHubDispatchEvent } from "@/trigger";
-import PostHandler from "@/PostHandle";
-import Uploader from "@/Upload";
-import { normalize, readAndFilterValidPosts } from "./post";
+
+// import Uploader from "@/Upload";
+import { transform } from "./transform";
+
+import { gitUpload } from "@/upload/git";
 
 export default class Ob2StaticPlugin extends Plugin {
 	settings: StaticExporterSettings;
@@ -38,93 +39,71 @@ export default class Ob2StaticPlugin extends Plugin {
 					new Notice("No file active");
 					return;
 				}
-				const post = (
-					await normalize(
-						await readAndFilterValidPosts(tFiles, this.app),
-						this.app,
-					)
-				)[0];
+				const posts = await transform(tFiles, { app: this.app });
 
-				console.log(post.content, post.meta);
+				console.log(posts[0].content, posts[0].meta);
+				await gitUpload(posts, this.settings.uploader.git);
 			},
 		);
-		this.addRibbonIcon(
-			"folder-up",
-			"All validate files - Static Site MD Export",
-			async () => {
-				// Called when the user clicks the icon.
-				new Notice("Starting process");
-				const tFiles = this.app.vault.getFiles();
-				await this.process(tFiles);
-			},
-		);
-		this.addRibbonIcon("play-square", "Trigger GitHub Action deploy", () => {
-			// Called when the user clicks the icon.
-			triggerGitHubDispatchEvent(
-				this.settings.build.webhook_token,
-				this.settings.build.user,
-				this.settings.build.repo,
-				this.settings.build.event_type,
-			);
-			new Notice("Sent GitHub Action deploy Webhook");
-		}).setAttribute("id", "rb-sse-deploy-icon");
-
-		if (!this.settings.build.enable) {
-			// Don't know why i need to use setTimeout to remove the icon
-			setTimeout(() => {
-				document.getElementById("rb-sse-deploy-icon")?.remove();
-			}, 100);
-		}
+		// this.addRibbonIcon(
+		// 	"folder-up",
+		// 	"All validate files - Static Site MD Export",
+		// 	async () => {
+		// 		// Called when the user clicks the icon.
+		// 		new Notice("Starting process");
+		// 		const tFiles = this.app.vault.getFiles();
+		// 		await this.process(tFiles);
+		// 	},
+		// );
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new Ob2StaticSettingTab(this.app, this));
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-empty-function -- This is a required function
 	onunload(): void {}
 
 	/**
 	 * Processes the notes and uploads them to the specified S3 bucket.
 	 */
-	async process(tFiles: TFile[]): Promise<void> {
-		const uploader = new Uploader(this.app, this.settings);
+	// async process(tFiles: TFile[]): Promise<void> {
+	// 	const uploader = new Uploader(this.app, this.settings);
 
-		const validRe = await Promise.all(
-			tFiles.map((post) => this.ValidatePost(post)),
-		);
-		const postsOb = validRe.filter((post) => post !== null) as Post[];
-		if (postsOb.length === 0) {
-			new Notice("No valid posts found");
-			return;
-		}
-		const postHandler = new PostHandler(
-			tFiles,
-			postsOb,
-			this.settings,
-			this.app.vault,
-		);
-		const postsHexo = await postHandler.normalize();
+	// 	const validRe = await Promise.all(
+	// 		tFiles.map((post) => this.ValidatePost(post)),
+	// 	);
+	// 	const postsOb = validRe.filter((post) => post !== null) as Post[];
+	// 	if (postsOb.length === 0) {
+	// 		new Notice("No valid posts found");
+	// 		return;
+	// 	}
+	// 	const postHandler = new PostHandler(
+	// 		tFiles,
+	// 		postsOb,
+	// 		this.settings,
+	// 		this.app.vault,
+	// 	);
+	// 	const postsHexo = await postHandler.normalize();
 
-		new Notice(`Process complete,\n Start uploading (${postsHexo.length})`);
+	// 	new Notice(`Process complete,\n Start uploading (${postsHexo.length})`);
 
-		await uploader.upload(postsHexo);
-		new Notice("Upload complete");
-	}
+	// 	await uploader.upload(postsHexo);
+	// 	new Notice("Upload complete");
+	// }
 
-	async ValidatePost(tFile: TFile): Promise<Post | null> {
-		if (tFile.extension !== "md") return null;
-		const noteContent = await this.app.vault.cachedRead(tFile);
-		const frontmatter = this.app.metadataCache.getFileCache(tFile)
-			?.frontmatter as Frontmatter;
-		if (frontmatter?.published === true) {
-			return {
-				tFile: tFile,
-				frontmatter: frontmatter,
-				article: noteContent.split("---").slice(2).join("---"),
-			};
-		}
-		return null;
-	}
+	// async ValidatePost(tFile: TFile): Promise<Post | null> {
+	// 	if (tFile.extension !== "md") return null;
+	// 	const noteContent = await this.app.vault.cachedRead(tFile);
+	// 	const frontmatter = this.app.metadataCache.getFileCache(tFile)
+	// 		?.frontmatter as Frontmatter;
+	// 	if (frontmatter?.published === true) {
+	// 		return {
+	// 			tFile: tFile,
+	// 			frontmatter: frontmatter,
+	// 			article: noteContent.split("---").slice(2).join("---"),
+	// 		};
+	// 	}
+	// 	return null;
+	// }
 
 	async loadSettings(): Promise<void> {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());

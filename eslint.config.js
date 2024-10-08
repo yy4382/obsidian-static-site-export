@@ -8,10 +8,6 @@ export default tseslint.config(
 		ignores: ["node_modules/**", "main.js"],
 	},
 	{
-		rules: {
-			// "@typescript-eslint/explicit-function-return-type": "error",
-			// "no-console": ["error", { allow: ["warn", "error"] }],
-		},
 		languageOptions: {
 			globals: {
 				...globals.browser,
@@ -21,5 +17,22 @@ export default tseslint.config(
 	},
 	eslint.configs.recommended,
 	...tseslint.configs.strict,
-	...tseslint.configs.stylistic,
+	// ...tseslint.configs.stylistic,
+	{
+		rules: {
+			"@typescript-eslint/no-non-null-assertion": "off",
+			"@typescript-eslint/no-unused-vars": [
+				"error",
+				{
+					args: "all",
+					argsIgnorePattern: "^_",
+					caughtErrors: "all",
+					caughtErrorsIgnorePattern: "^_",
+					destructuredArrayIgnorePattern: "^_",
+					varsIgnorePattern: "^_",
+					ignoreRestSiblings: true,
+				},
+			],
+		},
+	},
 );

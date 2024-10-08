@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { Post } from "@/post";
+import { Post } from "@/type";
 import { App, ReferenceCache, TFile } from "obsidian";
+import type { TransformCtx } from "@/type";
 
 export class ImageTransformer {
-	app: App;
-	constructor(app: App) {
-		this.app = app;
+	ctx: TransformCtx;
+	constructor(ctx: TransformCtx) {
+		this.ctx = ctx;
 	}
 	async onBeforeTransform() {}
 	/**
@@ -28,4 +29,9 @@ export class ImageTransformer {
 	 * @param post context, if need to modify, modify in place
 	 */
 	async onAfterTransform(post: Post) {}
+
+	/**
+	 * After all files are processed.
+	 */
+	async onFinish() {}
 }
