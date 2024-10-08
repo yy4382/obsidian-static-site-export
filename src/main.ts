@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS, Ob2StaticSettingTab } from "@/Settings";
 import { transform } from "./transform";
 
 import { gitUpload } from "@/upload/git";
+import { defu } from "defu";
 
 export default class Ob2StaticPlugin extends Plugin {
 	settings: SSSettings;
@@ -36,7 +37,7 @@ export default class Ob2StaticPlugin extends Plugin {
 	onunload(): void {}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = defu(await this.loadData(), DEFAULT_SETTINGS);
 	}
 
 	async saveSettings(): Promise<void> {
