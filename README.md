@@ -1,13 +1,7 @@
 # Static Site MD Exporter for Obsidian
 
 > [!WARNING]
-> **Not actively maintianed, Seeking New Maintainer**
-> 
-> This project is no longer actively maintained, because I don't use Obisidian for editing my blog posts.
->
-> However, I believe the project still holds some value for others. If you're interested in becoming the new maintainer, I'm open to transferring repository ownership. To be considered, I'd appreciate seeing some contributions first, such as submitting a few pull requests.
->
-> The plugin still works fine on the current version of Obsidian Desktop, so if you are a user, don't be frightened, and if you know how to write Typescript, please consider contribute to it!
+> Undergoing large refactor. v2.0 may come soon, which remove some features in v1, and will enable more configurations! 
 
 Integrate Obsidian into your blog writing process!
 
@@ -15,7 +9,7 @@ Export notes with the `published: true` front matter into plain Markdown, so tha
 
 Meanwhile, wiki links`[[]]`  and many other Obsidian features can be used normally. This plugin does the work of converting `[[]]` style into `[]()` style automatically in exported markdown, leaving the links inside Obsidian untouched.
 
-Images will be automatically uploaded to a image hosting service. More choices will be added in future.
+Images will be automatically uploaded to an image hosting service. More choices will be added in the future.
 
 ## Features (How it Works?)
 
@@ -24,11 +18,11 @@ Images will be automatically uploaded to a image hosting service. More choices w
 The "All validate files - Static Site MD Export" button on panel (Ribbon) does:
 
 1. Get all the notes in vault with front matter "published" and the value is true (bool value).
-2. Transform them into general markdown format:
+2. Transform them into general Markdown format:
 3. For [[]] or ![[]] links (wiki links) in notes, it finds the target note. There are three cases:
    1. Target note is also "published": change `[[target note's filename]]` into `[target note's title](target note's slug)`[^1] format (if link has a `#` or `|` or is a `![[]]` link, this plugin can smartly handle them)
    2. Target note is not "published": remove the [[]] and leave the content in it untouched.
-   3. Target note is image file: upload it to a image hosting site, and replace the image link. The image file won't be modified. Currently only Easyimage is supported.
+   3. Target note is image file: upload it to an image hosting site, and replace the image link. The image file won't be modified. Currently only Easyimage is supported.
 4. Change tags in front matter into 1-depth format (discarding content before /)
 5. Upload the markdown files onto S3 or commit via git. A setting item controls the behavior.
 
@@ -36,7 +30,7 @@ The "Current file - Static Site MD Export" does similar staff, but only validate
 
 The “Trigger GitHub Action deploy” button does:
 
-- Send a webhook to Github so that it knows it's time to build.
+- Send a webhook to GitHub so that it knows it's time to build.
 
 If you delete a file in your vault, your file in S3 or git won't be deleted. You need to go there to delete them. Similarly, if you change the slug of a post, you need to delete the markdown file in s3 or git with the original slug as name.
 
