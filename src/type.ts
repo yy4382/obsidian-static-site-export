@@ -20,20 +20,4 @@ export interface Post extends Entry {
 	meta: CachedMetadataPost;
 }
 
-export interface StaticExporterSettings {
-	post_prefix: string;
-	uploader: {
-		type: string;
-		git: {
-			repo: string;
-			branch: string;
-			username: string;
-			pat: string;
-			author: {
-				name: string;
-				email: string;
-			};
-			commit_message: string;
-		};
-	};
-}
+export type { SSSettings } from "./Settings";

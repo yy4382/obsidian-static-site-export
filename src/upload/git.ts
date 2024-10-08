@@ -1,11 +1,11 @@
 import * as git from "isomorphic-git";
 import LightningFs from "@isomorphic-git/lightning-fs";
 import http from "isomorphic-git/http/web/";
-import type { Post, StaticExporterSettings } from "@/type";
+import type { Post, SSSettings } from "@/type";
 import { Notice } from "obsidian";
 import { stringifyPost } from "@/utils/stringifyPost";
 
-type GitUploadSettings = StaticExporterSettings["uploader"]["git"];
+type GitUploadSettings = SSSettings["uploader"]["git"];
 
 const INDEX_DB_NAME = "ssMdExporter";
 const LOCAL_REPO_DIR = "/posts";

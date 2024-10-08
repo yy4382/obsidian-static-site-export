@@ -1,5 +1,5 @@
 import { Notice, Plugin, TFile } from "obsidian";
-import { StaticExporterSettings } from "@/type";
+import { SSSettings } from "@/type";
 import { DEFAULT_SETTINGS, Ob2StaticSettingTab } from "@/Settings";
 
 // import Uploader from "@/Upload";
@@ -8,7 +8,7 @@ import { transform } from "./transform";
 import { gitUpload } from "@/upload/git";
 
 export default class Ob2StaticPlugin extends Plugin {
-	settings: StaticExporterSettings;
+	settings: SSSettings;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();

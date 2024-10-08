@@ -1,16 +1,52 @@
-import { App, Notice, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting } from "obsidian";
 import Ob2StaticPlugin from "@/main";
-import { StaticExporterSettings } from "@/type";
 import { clearIndexedDB } from "@/upload/git";
 
-export const DEFAULT_SETTINGS: StaticExporterSettings = {
-	post_prefix: "post/",
+type UploadGitSettings = {
+	// repo info
+	repo: string;
+	branch: string;
+	targetPath: string;
+
+	// use info
+	username: string;
+	pat: string;
+
+	// commit info
+	author: {
+		name: string;
+		email: string;
+	};
+	commit_message: string;
+};
+
+type UploaderSettings = {
+	type: "git";
+	git: UploadGitSettings;
+};
+
+type TransformSettings = {
+	post_prefix: string;
+	imageTransformer: "base64";
+};
+
+export type SSSettings = {
+	transformer: TransformSettings;
+	uploader: UploaderSettings;
+};
+
+export const DEFAULT_SETTINGS: SSSettings = {
+	transformer: {
+		post_prefix: "post/",
+		imageTransformer: "base64",
+	},
 	uploader: {
 		type: "git",
 		git: {
 			repo: "",
 			branch: "",
 			username: "",
+			targetPath: "/",
 			pat: "",
 			author: {
 				name: "Obsidian Exporter",
@@ -23,7 +59,7 @@ export const DEFAULT_SETTINGS: StaticExporterSettings = {
 
 export class Ob2StaticSettingTab extends PluginSettingTab {
 	plugin: Ob2StaticPlugin;
-	settings: StaticExporterSettings;
+	settings: SSSettings;
 
 	constructor(app: App, plugin: Ob2StaticPlugin) {
 		super(app, plugin);
@@ -39,19 +75,18 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl).setHeading().setName("Post Uploader");
 
-		new Setting(containerEl)
-			.setName("Uploader type")
-			.addDropdown((dropdown) => {
-				dropdown
-					.addOption("git", "Git")
-					.addOption("s3", "S3 or S3 capable")
-					.setValue(settings.uploader.type)
-					.onChange(async (value) => {
-						settings.uploader.type = value;
-						await this.plugin.saveSettings();
-						this.display();
-					});
-			});
+		// new Setting(containerEl)
+		// 	.setName("Uploader type")
+		// 	.addDropdown((dropdown) => {
+		// 		dropdown
+		// 			.addOption("git", "Git")
+		// 			.setValue(settings.uploader.type)
+		// 			.onChange(async (value) => {
+		// 				settings.uploader.type = value;
+		// 				await this.plugin.saveSettings();
+		// 				this.display();
+		// 			});
+		// 	});
 
 		if (settings.uploader.type === "git") {
 			new Setting(containerEl)
@@ -144,9 +179,9 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 			.addText((text) =>
 				text
 					.setPlaceholder("post/")
-					.setValue(settings.post_prefix)
+					.setValue(settings.transformer.post_prefix)
 					.onChange(async (value) => {
-						settings.post_prefix = value;
+						settings.transformer.post_prefix = value;
 						await this.plugin.saveSettings();
 					}),
 			);

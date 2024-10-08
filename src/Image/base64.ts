@@ -10,7 +10,7 @@ export class Base64Transformer extends ImageTransformer {
 	}
 	async onTransform(
 		link: Reference,
-		sourceTFile: TFile,
+		_sourceTFile: TFile,
 		targetTFile: TFile,
 	): Promise<string> {
 		if (this.fileMap.has(targetTFile.path)) {

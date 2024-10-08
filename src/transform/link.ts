@@ -1,7 +1,5 @@
-import type { Post, TransformCtx } from "@/type";
-import { Base64Transformer } from "@/Image/base64";
+import type { Post } from "@/type";
 import { ReferenceCache, TFile } from "obsidian";
-import { ImageTransformer } from "@/Image/base";
 import { slug as slugger } from "github-slugger";
 import type { TransformAction, TransformCtxWithImage } from "@/transform/index";
 
