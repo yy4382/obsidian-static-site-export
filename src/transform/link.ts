@@ -47,7 +47,7 @@ async function transformLink(
 		{
 			const slug = getSlug(targetFile, ctx);
 			if (slug)
-				return `[${link.displayText ?? link.link}](${slugToPath(slug)}${link.link.includes("#") ? "#" + slugger(link.link.split("#")[1]) : ""})`;
+				return `[${link.displayText ?? link.link}](${slugToPath(slug, ctx)}${link.link.includes("#") ? "#" + slugger(link.link.split("#")[1]) : ""})`;
 			else {
 				return link.displayText ?? link.link;
 			}
@@ -71,7 +71,6 @@ function getSlug(file: TFile, ctx: TransformCtxWithImage): string | null {
 	return slug ?? null;
 }
 
-function slugToPath(slug: string): string {
-	console.warn("No impl: SlugToPath");
-	return slug;
+function slugToPath(slug: string, ctx: TransformCtxWithImage): string {
+	return ctx.settings.transformer.post_prefix + slug;
 }
