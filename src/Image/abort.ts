@@ -1,7 +1,7 @@
 import { Notice, ReferenceCache, TFile } from "obsidian";
 import { ImageTransformer } from "@/Image/base";
 
-export class AbortImageTransfromer extends ImageTransformer {
+export class AbortImageTransformer extends ImageTransformer {
 	async onTransform(
 		_link: ReferenceCache,
 		_sourceTFile: TFile,
