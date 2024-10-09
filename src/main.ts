@@ -16,20 +16,27 @@ export default class Ob2StaticPlugin extends Plugin {
 			"file-up",
 			"Current file - Static Site MD Export",
 			async () => {
-				// Called when the user clicks the icon.
 				new Notice("Starting process");
-				const tFiles = [this.app.workspace.getActiveFile() as TFile];
-				if (tFiles[0] === null) {
+				const tFile = this.app.workspace.getActiveFile();
+				if (tFile === null) {
 					new Notice("No file active");
 					return;
 				}
-				const posts = await transform(tFiles, {
-					app: this.app,
-					settings: this.settings,
-				});
+				await this.process([tFile]);
+			},
+		);
 
-				console.log(posts[0].content, posts[0].meta);
-				await gitUpload(posts, this.settings.uploader.git);
+		this.addRibbonIcon(
+			"folder-up",
+			"All files - Static Site MD Export",
+			async () => {
+				new Notice("Starting process");
+				const tFiles = this.app.vault.getFiles();
+				if (tFiles === null) {
+					new Notice("No file active");
+					return;
+				}
+				await this.process(tFiles);
 			},
 		);
 
@@ -45,5 +52,15 @@ export default class Ob2StaticPlugin extends Plugin {
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+	}
+
+	async process(tFiles: TFile[]): Promise<void> {
+		const posts = await transform(tFiles, {
+			app: this.app,
+			settings: this.settings,
+		});
+
+		console.log(posts[0].content, posts[0].meta);
+		await gitUpload(posts, this.settings.uploader.git);
 	}
 }
