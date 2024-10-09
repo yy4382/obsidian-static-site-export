@@ -16,26 +16,10 @@ export const gitUpload = async (posts: Post[], config: GitUploadSettings) => {
 	const g = getGitOps(config);
 	await syncLocalRepo(g);
 
-	// Write the posts to the file system and commit them
-	g.fs.mkdir(`${LOCAL_REPO_DIR}${config.targetPath}`, undefined, (err) => {
-		if (err) {
-			console.error(err);
-		}
-	});
 	for (const post of posts) {
 		const { filename, content } = stringifyPost(post);
 		const filepath = config.targetPath + "/" + filename;
-		g.fs.writeFile(
-			`${LOCAL_REPO_DIR}/${filepath}`,
-			content,
-			undefined,
-			(err) => {
-				if (err) {
-					console.error(err);
-					new Notice(err.message);
-				}
-			},
-		);
+		await writeFileWithCheck(`${LOCAL_REPO_DIR}/${filepath}`, content, g.fs);
 		await g.add(filepath);
 	}
 	if (!(await g.haveChanges())) {
@@ -168,4 +152,31 @@ export function clearIndexedDB(): void {
 		console.error("Couldn't delete database", e);
 		new Notice("Couldn't delete database; see console for details");
 	};
+}
+
+async function writeFileWithCheck(
+	filepath: string,
+	content: string,
+	fs: LightningFs,
+): Promise<void> {
+	const dir = filepath.substring(0, filepath.lastIndexOf("/"));
+	await mkdirRecursive(fs, dir);
+	await fs.promises.writeFile(filepath, content);
+}
+async function mkdirRecursive(fs: LightningFs, dirPath: string) {
+	const parts = dirPath.split("/").filter((p) => p);
+	let currentPath = "";
+
+	for (const part of parts) {
+		currentPath += "/" + part;
+		try {
+			await fs.promises.stat(currentPath);
+		} catch (err) {
+			if (err.code === "ENOENT") {
+				await fs.promises.mkdir(currentPath);
+			} else {
+				throw err;
+			}
+		}
+	}
 }
