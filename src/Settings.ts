@@ -27,7 +27,7 @@ type UploaderSettings = {
 
 type TransformSettings = {
 	post_prefix: string;
-	imageTransformer: "base64";
+	imageTransformer: "base64" | "abort";
 };
 
 export type SSSettings = {
@@ -38,7 +38,7 @@ export type SSSettings = {
 export const DEFAULT_SETTINGS: SSSettings = {
 	transformer: {
 		post_prefix: "post/",
-		imageTransformer: "base64",
+		imageTransformer: "abort",
 	},
 	uploader: {
 		type: "git",
@@ -197,5 +197,24 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					}),
 			);
+
+		new Setting(containerEl)
+			.setName("Image Transformer")
+			.setDesc("Select which transformer to use for links to image")
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOptions({
+						base64: "Base64",
+						abort: "Abort",
+					} satisfies Record<
+						SSSettings["transformer"]["imageTransformer"],
+						unknown
+					>)
+					.setValue(settings.transformer.imageTransformer)
+					.onChange(async (value) => {
+						settings.transformer.imageTransformer = value as never;
+						await this.plugin.saveSettings();
+					});
+			});
 	}
 }

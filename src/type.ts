@@ -1,4 +1,5 @@
 import { App, CachedMetadata, TFile } from "obsidian";
+import { SSSettings } from "@/Settings";
 
 export interface Entry {
 	tFile: TFile;
@@ -8,6 +9,7 @@ export interface Entry {
 
 export interface TransformCtx {
 	app: App;
+	settings: SSSettings;
 }
 type CachedMetadataPost = Omit<
 	CachedMetadata,

@@ -23,7 +23,10 @@ export default class Ob2StaticPlugin extends Plugin {
 					new Notice("No file active");
 					return;
 				}
-				const posts = await transform(tFiles, { app: this.app });
+				const posts = await transform(tFiles, {
+					app: this.app,
+					settings: this.settings,
+				});
 
 				console.log(posts[0].content, posts[0].meta);
 				await gitUpload(posts, this.settings.uploader.git);

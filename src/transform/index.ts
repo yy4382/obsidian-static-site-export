@@ -4,7 +4,7 @@ import * as R from "ramda";
 import type { TransformCtx, Entry, Post } from "@/type";
 import { processLinks } from "./link";
 import { transformTag } from "./tag";
-import { Base64Transformer } from "@/Image/base64";
+import { getImageTransfomer } from "@/Image";
 
 export type TransformCtxWithImage = TransformCtx & {
 	imageTf: ImageTransformer;
@@ -21,7 +21,9 @@ export async function transform(
 ): Promise<Post[]> {
 	const originalPosts = await readAndFilterValidPosts(ctx, files);
 
-	const imageTf = new Base64Transformer(ctx);
+	const imageTf = new (getImageTransfomer(
+		ctx.settings.transformer.imageTransformer,
+	))(ctx);
 	await imageTf.onBeforeTransform();
 	const ctxWithImage: TransformCtxWithImage = { ...ctx, imageTf };
 	const transformedPosts = await Promise.all(
