@@ -4,6 +4,12 @@ import http from "isomorphic-git/http/web/";
 import type { Post, SSSettings } from "@/type";
 import { App, Modal, Notice, Setting } from "obsidian";
 import { stringifyPost } from "@/utils/stringifyPost";
+import { AbortErrorParams } from "@/main";
+import {
+	createPromiseWithResolver,
+	type PromiseHandler,
+} from "@/utils/createPromise";
+import { ConfirmModal } from "@/confirm-modal";
 
 type GitUploadSettings = SSSettings["uploader"]["git"];
 
@@ -16,9 +22,19 @@ export const gitUpload = async (
 	posts: Post[],
 	config: GitUploadSettings,
 	app: App,
-) => {
+): Promise<AbortErrorParams | undefined> => {
 	const g = getGitOps(config);
-	await syncLocalRepo(g);
+
+	try {
+		await syncLocalRepo(g);
+	} catch (e) {
+		return {
+			title: "Failed to read remote repo",
+			content: e.message,
+			stage: "upload",
+			error: e,
+		};
+	}
 
 	const pathMap = new Map<string, string>();
 
@@ -30,13 +46,15 @@ export const gitUpload = async (
 		await writeFileWithCheck(`${LOCAL_REPO_DIR}/${filepath}`, content, g.fs);
 		await g.add(filepath);
 	}
-	console.log(pathMap);
 
 	const changedFilePaths = (await g.changedFiles()).map((row) => row[0]);
-	console.log(changedFilePaths);
 	if (changedFilePaths.length === 0) {
 		console.warn("Nothing to commit, worktree clean.");
-		return;
+		return {
+			title: "Nothing to commit",
+			content: "worktree clean",
+			stage: "upload",
+		};
 	}
 
 	const changedFiles = changedFilePaths
@@ -49,14 +67,37 @@ export const gitUpload = async (
 		content: string;
 	}[];
 
+	const { promise: confirmPromise, handler } = createPromiseWithResolver();
+
 	const commitAndPush = async () => {
 		const sha = await g.commit();
 		new Notice(`New commit SHA: ${sha.slice(0, 7)}, start pushing...`);
 		const result = await g.push();
-		console.log(result);
+		if (!result.ok) {
+			console.error(result);
+			throw new Error(result.error ?? "Unknown error");
+		}
 	};
 
-	new GitConfirmModal(app, changedFiles, commitAndPush).open();
+	new GitConfirmModal(app, changedFiles, handler).open();
+
+	try {
+		await confirmPromise;
+	} catch {
+		return;
+	}
+
+	try {
+		await commitAndPush();
+	} catch (e) {
+		return {
+			title: "Failed to push",
+			content: e.message,
+			stage: "upload",
+			error: e,
+		};
+	}
+	new GitSuccessModal(app, config).open();
 };
 
 const getGitOps = (config: GitUploadSettings) => {
@@ -103,7 +144,6 @@ const getGitOps = (config: GitUploadSettings) => {
 
 		const changedFiles = matrix.filter((row) => {
 			const [_filepath, headStatus, workdirStatus, stageStatus] = row;
-			console.log(_filepath, headStatus, workdirStatus, stageStatus);
 			return headStatus !== workdirStatus || headStatus !== stageStatus;
 		});
 
@@ -148,22 +188,22 @@ const getGitOps = (config: GitUploadSettings) => {
 };
 
 async function syncLocalRepo(g: GitOps) {
-	if (!(await needClone(g))) return;
+	const needClone = async () => {
+		let localSha = "";
+		try {
+			localSha = await g.resolveRef();
+		} catch {
+			return true;
+		}
+		const remoteSha = (await g.listServerRefs())[0]?.oid;
+		return remoteSha !== localSha;
+	};
+
+	if (!(await needClone())) return;
 	clearIndexedDB();
 	g.fs.init(INDEX_DB_NAME);
 	await g.clone();
 }
-
-const needClone = async (g: GitOps) => {
-	let localSha = "";
-	try {
-		localSha = await g.resolveRef();
-	} catch {
-		return true;
-	}
-	const remoteSha = (await g.listServerRefs())[0]?.oid;
-	return remoteSha !== localSha;
-};
 
 export function clearIndexedDB(): void {
 	const request = indexedDB.deleteDatabase(INDEX_DB_NAME);
@@ -197,23 +237,21 @@ async function writeFileWithCheck(
 	await fs.promises.writeFile(filepath, content);
 }
 
-class GitConfirmModal extends Modal {
+class GitConfirmModal extends ConfirmModal {
 	private posts: { title: string; content: string }[];
-	private confirmCallback: () => void;
 	constructor(
 		app: App,
 		posts: { title: string; content: string }[],
-		confirmCallback: () => void,
+		handler: PromiseHandler,
 	) {
-		super(app);
+		super(app, handler);
 		this.posts = posts;
-		this.confirmCallback = confirmCallback;
 	}
 
 	onOpen(): void {
 		const { contentEl } = this;
 
-		this.setTitle("Changed files");
+		this.setTitle("Git: Changed files");
 
 		const innerContentEl = contentEl.createDiv({ cls: "cfm-inner-content" });
 		this.posts.forEach((post) => {
@@ -227,9 +265,25 @@ class GitConfirmModal extends Modal {
 
 		new Setting(contentEl).addButton((button) => {
 			button.setButtonText("Commit & Push").onClick(() => {
-				this.confirmCallback();
-				this.close();
+				this.confirm();
 			});
+		});
+	}
+}
+
+class GitSuccessModal extends Modal {
+	config: GitUploadSettings;
+	constructor(app: App, config: GitUploadSettings) {
+		super(app);
+		this.config = config;
+	}
+	onOpen(): void {
+		this.setTitle("Git: Success");
+		const div = this.contentEl.createDiv();
+		div.createEl("p", { text: "Successfully committed and pushed" });
+		div.createEl("p").createEl("a", {
+			text: "Open Repository",
+			href: this.config.repo,
 		});
 	}
 }

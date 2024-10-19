@@ -2,14 +2,34 @@ import { Modal, Setting, type App } from "obsidian";
 
 import { Post } from "@/type";
 import { stringifyPost } from "./utils/stringifyPost";
+import { PromiseHandler } from "./utils/createPromise";
 
 export class ConfirmModal extends Modal {
-	private posts: Post[];
-	private confirmCallback: () => void;
-	constructor(app: App, posts: Post[], confirmCallback: () => void) {
+	private handler: PromiseHandler;
+	private needReject: boolean;
+	constructor(app: App, handler: PromiseHandler) {
 		super(app);
+		this.handler = handler;
+		this.needReject = true;
+	}
+
+	confirm(value?: unknown): void {
+		this.handler.resolver(value);
+		this.close();
+	}
+	cancel(reason?: Error): void {
+		if (this.needReject) {
+			this.handler.rejecter(reason ?? new Error("User aborted"));
+		}
+		this.needReject = false;
+	}
+}
+
+export class TransformConfirmModal extends ConfirmModal {
+	private posts: Post[];
+	constructor(app: App, posts: Post[], handler: PromiseHandler) {
+		super(app, handler);
 		this.posts = posts;
-		this.confirmCallback = confirmCallback;
 	}
 
 	onOpen(): void {
@@ -29,9 +49,11 @@ export class ConfirmModal extends Modal {
 
 		new Setting(contentEl).addButton((button) => {
 			button.setButtonText("Confirm Export").onClick(() => {
-				this.confirmCallback();
-				this.close();
+				this.confirm();
 			});
 		});
+	}
+	onClose(): void {
+		this.cancel();
 	}
 }

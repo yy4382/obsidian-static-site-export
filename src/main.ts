@@ -1,10 +1,11 @@
-import { Notice, Plugin, TFile } from "obsidian";
+import { App, Modal, Notice, Plugin, TFile } from "obsidian";
 import { SSSettings } from "@/type";
 import { DEFAULT_SETTINGS, Ob2StaticSettingTab } from "@/Settings";
 import { transform } from "./transform";
 import { defu } from "defu";
-import { ConfirmModal } from "./confirm-modal";
+import { TransformConfirmModal } from "./confirm-modal";
 import { gitUpload } from "./upload/git";
+import { createPromiseWithResolver } from "./utils/createPromise";
 
 export default class Ob2StaticPlugin extends Plugin {
 	settings: SSSettings;
@@ -60,10 +61,48 @@ export default class Ob2StaticPlugin extends Plugin {
 			settings: this.settings,
 		});
 
-		new ConfirmModal(this.app, posts, async () => {
-			new Notice("Start to upload...");
-			await gitUpload(posts, this.settings.uploader.git, this.app);
-		}).open();
+		// Confirm modal
+		const { promise: confirmPromise, handler } = createPromiseWithResolver();
+		new TransformConfirmModal(this.app, posts, handler).open();
+		try {
+			await confirmPromise;
+		} catch {
+			return;
+		}
+
+		const error = await gitUpload(posts, this.settings.uploader.git, this.app);
+		if (error) {
+			new ErrorModal(error, this.app).open();
+		}
+
 		console.log("process complete");
+	}
+}
+
+export type AbortErrorParams = {
+	title: string;
+	content: string;
+	stage: "upload" | "transform";
+	error?: Error;
+};
+
+export class ErrorModal extends Modal {
+	title: string;
+	content: string;
+	stage: "upload" | "transform";
+	constructor(params: AbortErrorParams, app: App) {
+		super(app);
+		this.title = params.title;
+		this.content = params.content;
+		this.stage = params.stage;
+		console.error(params.error);
+	}
+
+	onOpen(): void {
+		this.setTitle(`Error: ${this.title}`);
+		this.contentEl.createEl("p", {
+			text: `Error occurred in ${this.stage} process.`,
+		});
+		this.contentEl.createEl("p", { text: this.content });
 	}
 }
