@@ -5,6 +5,21 @@ import { processLinks } from "./link";
 import { transformTag } from "./tag";
 import { getImageTransformer } from "@/Image";
 
+/*
+Transform pipeline:
+
+1. Read all files and filter out valid posts
+2. Check wiki links, push replacement as "actions" into context
+	- If link to markdown file, replace with []() link
+	- If link to image, replace with ![]() link
+		- requires a image transformer, which has some callbacks to use in the process
+3. Check tags, push replacement as "actions" into context
+(Note that the post array is not modified in above steps)
+4. Apply all actions to the post array
+	- Replace all actions in "actions" array
+	- Run all functions in "actions" array
+*/
+
 export type TransformCtxWithImage = TransformCtx & {
 	imageTf: ImageTransformer;
 };
@@ -14,6 +29,12 @@ export type TransformAction =
 	| ReplaceAction
 	| ((post: Post) => Post | Promise<Post>);
 
+/**
+ * The main function to transform all posts
+ * @param files All files, including non-post files
+ * @param ctx context
+ * @returns transformed posts
+ */
 export async function transform(
 	files: TFile[],
 	ctx: TransformCtx,
@@ -32,6 +53,13 @@ export async function transform(
 	return transformedPosts;
 }
 
+/**
+ * Reads and filters valid posts from the given list of files.
+ *
+ * @param ctx - The transformation context containing the application instance.
+ * @param postFiles - An array of TFile objects representing the files to be processed.
+ * @returns An array of valid Post objects.
+ */
 const readAndFilterValidPosts = async (
 	ctx: TransformCtx,
 	postFiles: TFile[],
@@ -47,6 +75,13 @@ const readAndFilterValidPosts = async (
 	)
 		.map(validateEntry)
 		.filter((post): post is Post => post !== undefined);
+
+/**
+ * Validates the given entry to ensure it has the necessary metadata.
+ *
+ * @param post - The entry to validate.
+ * @returns The validated post if it contains the required metadata, otherwise `undefined`.
+ */
 function validateEntry(post: Entry): Post | undefined {
 	if (!post.meta) return undefined;
 	if (!post.meta.frontmatterPosition) return undefined;
