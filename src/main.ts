@@ -2,9 +2,9 @@ import { Notice, Plugin, TFile } from "obsidian";
 import { SSSettings } from "@/type";
 import { DEFAULT_SETTINGS, Ob2StaticSettingTab } from "@/Settings";
 import { transform } from "./transform";
-
-import { gitUpload } from "@/upload/git";
 import { defu } from "defu";
+import { ConfirmModal } from "./confirm-modal";
+import { gitUpload } from "./upload/git";
 
 export default class Ob2StaticPlugin extends Plugin {
 	settings: SSSettings;
@@ -60,7 +60,10 @@ export default class Ob2StaticPlugin extends Plugin {
 			settings: this.settings,
 		});
 
-		console.log(posts[0].content, posts[0].meta);
-		await gitUpload(posts, this.settings.uploader.git);
+		new ConfirmModal(this.app, posts, async () => {
+			new Notice("Start to upload...");
+			await gitUpload(posts, this.settings.uploader.git, this.app);
+		}).open();
+		console.log("process complete");
 	}
 }

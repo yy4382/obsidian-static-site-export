@@ -2,7 +2,7 @@ import * as git from "isomorphic-git";
 import LightningFs from "@isomorphic-git/lightning-fs";
 import http from "isomorphic-git/http/web/";
 import type { Post, SSSettings } from "@/type";
-import { Notice } from "obsidian";
+import { App, Modal, Notice, Setting } from "obsidian";
 import { stringifyPost } from "@/utils/stringifyPost";
 
 type GitUploadSettings = SSSettings["uploader"]["git"];
@@ -12,25 +12,51 @@ const LOCAL_REPO_DIR = "/posts";
 
 type GitOps = ReturnType<typeof getGitOps>;
 
-export const gitUpload = async (posts: Post[], config: GitUploadSettings) => {
+export const gitUpload = async (
+	posts: Post[],
+	config: GitUploadSettings,
+	app: App,
+) => {
 	const g = getGitOps(config);
 	await syncLocalRepo(g);
 
+	const pathMap = new Map<string, string>();
+
 	for (const post of posts) {
 		const { filename, content } = stringifyPost(post);
-		const filepath = config.targetPath + "/" + filename;
+		const filepath =
+			config.targetPath.replace(/^\/+|\/+$/g, "") + "/" + filename;
+		pathMap.set(filepath, content);
 		await writeFileWithCheck(`${LOCAL_REPO_DIR}/${filepath}`, content, g.fs);
 		await g.add(filepath);
 	}
-	if (!(await g.haveChanges())) {
+	console.log(pathMap);
+
+	const changedFilePaths = (await g.changedFiles()).map((row) => row[0]);
+	console.log(changedFilePaths);
+	if (changedFilePaths.length === 0) {
 		console.warn("Nothing to commit, worktree clean.");
 		return;
 	}
-	const sha = await g.commit();
-	console.log(sha);
-	new Notice(`New commit SHA: ${sha.slice(0, 7)}, start pushing...`);
-	const result = await g.push();
-	console.log(result);
+
+	const changedFiles = changedFilePaths
+		.map((filepath) => ({
+			title: filepath,
+			content: pathMap.get(filepath),
+		}))
+		.filter((x) => x.content !== undefined) as {
+		title: string;
+		content: string;
+	}[];
+
+	const commitAndPush = async () => {
+		const sha = await g.commit();
+		new Notice(`New commit SHA: ${sha.slice(0, 7)}, start pushing...`);
+		const result = await g.push();
+		console.log(result);
+	};
+
+	new GitConfirmModal(app, changedFiles, commitAndPush).open();
 };
 
 const getGitOps = (config: GitUploadSettings) => {
@@ -72,7 +98,7 @@ const getGitOps = (config: GitUploadSettings) => {
 			}),
 		});
 
-	const haveChanges = async () => {
+	const changedFiles = async () => {
 		const matrix = await git.statusMatrix({ fs, dir });
 
 		const changedFiles = matrix.filter((row) => {
@@ -81,7 +107,7 @@ const getGitOps = (config: GitUploadSettings) => {
 			return headStatus !== workdirStatus || headStatus !== stageStatus;
 		});
 
-		return changedFiles.length > 0;
+		return changedFiles;
 	};
 
 	const add = async (filepath: string) => git.add({ fs, dir, filepath });
@@ -117,7 +143,7 @@ const getGitOps = (config: GitUploadSettings) => {
 		clone,
 		push,
 		commit,
-		haveChanges,
+		changedFiles,
 	};
 };
 
@@ -160,23 +186,50 @@ async function writeFileWithCheck(
 	fs: LightningFs,
 ): Promise<void> {
 	const dir = filepath.substring(0, filepath.lastIndexOf("/"));
-	await mkdirRecursive(fs, dir);
+
+	try {
+		await fs.promises.stat(dir);
+	} catch (err) {
+		console.debug(err, "dir not exist yet");
+		await fs.promises.mkdir(dir);
+	}
+
 	await fs.promises.writeFile(filepath, content);
 }
-async function mkdirRecursive(fs: LightningFs, dirPath: string) {
-	const parts = dirPath.split("/").filter((p) => p);
-	let currentPath = "";
 
-	for (const part of parts) {
-		currentPath += "/" + part;
-		try {
-			await fs.promises.stat(currentPath);
-		} catch (err) {
-			if (err.code === "ENOENT") {
-				await fs.promises.mkdir(currentPath);
-			} else {
-				throw err;
-			}
-		}
+class GitConfirmModal extends Modal {
+	private posts: { title: string; content: string }[];
+	private confirmCallback: () => void;
+	constructor(
+		app: App,
+		posts: { title: string; content: string }[],
+		confirmCallback: () => void,
+	) {
+		super(app);
+		this.posts = posts;
+		this.confirmCallback = confirmCallback;
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+
+		this.setTitle("Changed files");
+
+		const innerContentEl = contentEl.createDiv({ cls: "cfm-inner-content" });
+		this.posts.forEach((post) => {
+			const { title, content } = post;
+
+			const postEl = innerContentEl.createEl("details");
+
+			postEl.createEl("summary", { text: title });
+			postEl.createEl("pre", { text: content, cls: "cfm-post" });
+		});
+
+		new Setting(contentEl).addButton((button) => {
+			button.setButtonText("Commit & Push").onClick(() => {
+				this.confirmCallback();
+				this.close();
+			});
+		});
 	}
 }
