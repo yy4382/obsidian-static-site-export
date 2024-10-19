@@ -6,7 +6,7 @@ const nameMap = {
 	base64: Base64Transformer,
 	abort: AbortImageTransformer,
 };
-export function getImageTransfomer(
+export function getImageTransformer(
 	name: SSSettings["transformer"]["imageTransformer"],
 ) {
 	return nameMap[name];

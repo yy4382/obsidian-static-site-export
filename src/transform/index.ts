@@ -1,10 +1,9 @@
 import { TFile, Pos } from "obsidian";
 import { ImageTransformer } from "@/Image/base";
-import * as R from "ramda";
 import type { TransformCtx, Entry, Post } from "@/type";
 import { processLinks } from "./link";
 import { transformTag } from "./tag";
-import { getImageTransfomer } from "@/Image";
+import { getImageTransformer } from "@/Image";
 
 export type TransformCtxWithImage = TransformCtx & {
 	imageTf: ImageTransformer;
@@ -21,7 +20,7 @@ export async function transform(
 ): Promise<Post[]> {
 	const originalPosts = await readAndFilterValidPosts(ctx, files);
 
-	const imageTf = new (getImageTransfomer(
+	const imageTf = new (getImageTransformer(
 		ctx.settings.transformer.imageTransformer,
 	))(ctx);
 	await imageTf.onBeforeTransform();
@@ -47,8 +46,7 @@ const readAndFilterValidPosts = async (
 		)
 	)
 		.map(validateEntry)
-		.filter(R.complement(R.isNil));
-
+		.filter((post): post is Post => post !== undefined);
 function validateEntry(post: Entry): Post | undefined {
 	if (!post.meta) return undefined;
 	if (!post.meta.frontmatterPosition) return undefined;
