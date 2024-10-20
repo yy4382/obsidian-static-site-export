@@ -38,6 +38,7 @@ const context = await esbuild.context({
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
 	outfile: "main.js",
+	inject: ["./polyfill-buffer.js"],
 	// minify: prod,
 });
 
