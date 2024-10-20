@@ -89,16 +89,16 @@ When using "Abort" option for image, the plugin refused to export Note.md. If us
 ```markdown
 <!-- frontmatter omitted -->
 ## Sec 1
-[Ref] (/post/ref-slug)
-[Display Name] (/post/ref-slug)
+[Ref](/post/ref-slug)
+[Display Name](/post/ref-slug)
 ## Sec 2
-[Ref > section-example] (/post/ref-slug#section-example)
-[Display Name] (/post/ref-slug#section-example)
-[Sec 1] (#sec-1)
-[Display Name] (#sec-2)
+[Ref > section-example](/post/ref-slug#section-example)
+[Display Name](/post/ref-slug#section-example)
+[Sec 1](#sec-1)
+[Display Name](#sec-2)
 [[NoteThatNotExist]]
 ## Sec 3
-![image.png] [img1]
+![image.png][img1]
 ![[imageThatDoesNotExist]]
 
 [img1]:
