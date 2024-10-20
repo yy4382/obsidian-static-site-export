@@ -5,36 +5,26 @@
 
 Integrate Obsidian into your blog writing process!
 
-Export notes with the `published: true` front matter into plain Markdown, so that you can use them for static site generators!
+Export notes with the `published: true` front matter into plain Markdown (and upload them), so that you can use them for static site generators!
 
 Meanwhile, wiki links`[[]]`  and many other Obsidian features can be used normally. This plugin does the work of converting `[[]]` style into `[]()` style automatically in exported markdown, leaving the links inside Obsidian untouched.
 
-Images will be automatically uploaded to an image hosting service. More choices will be added in the future.
+Handling images that stores in the assets folder and linked by posts is kind of tricky. This plugin has 2 builtin options: embed image in output markdown via base64, or abort the export process if there any image of this kind (which means you need to upload them manually, or find another plugin to do this for you). Using a custom handler via the CustomJS plugin will also be supported in the future.
 
 ## Features (How it Works?)
 
-> Wiki links to non-image files won't be changed!
+> This plugin will not modify your files in the vault! (Since v2.0.0). It only reads the files and generate new files to upload.
 
 The "All validate files - Static Site MD Export" button on panel (Ribbon) does:
 
 1. Get all the notes in vault with front matter "published" and the value is true (bool value).
-2. Transform them into general Markdown format:
-3. For [[]] or ![[]] links (wiki links) in notes, it finds the target note. There are three cases:
-   1. Target note is also "published": change `[[target note's filename]]` into `[target note's title](target note's slug)`[^1] format (if link has a `#` or `|` or is a `![[]]` link, this plugin can smartly handle them)
-   2. Target note is not "published": remove the [[]] and leave the content in it untouched.
-   3. Target note is image file: upload it to an image hosting site, and replace the image link. The image file won't be modified. Currently only Easyimage is supported.
-4. Change tags in front matter into 1-depth format (discarding content before /)
-5. Upload the markdown files onto S3 or commit via git. A setting item controls the behavior.
+1. For `[[]]` or `![[]]` links (also `[]()` that doesn't point to an URL, or say, those obsidian thinks is a wiki link) in notes, it finds the target note, and transform them into standard markdown format. See [Transformation Details](#transformation-details) for more details.
+1. Change tags in front matter into 1-depth format (discarding content before /), removing tags in the content and merge them into the front matter.
+1. Upload the markdown files via git. You can also choose which folder in git repo to upload to. More upload methods will be supported in the future.
 
 The "Current file - Static Site MD Export" does similar staff, but only validate the current note, not all the notes.
 
-The “Trigger GitHub Action deploy” button does:
-
-- Send a webhook to GitHub so that it knows it's time to build.
-
 If you delete a file in your vault, your file in S3 or git won't be deleted. You need to go there to delete them. Similarly, if you change the slug of a post, you need to delete the markdown file in s3 or git with the original slug as name.
-
-[^1]: currently only support front matter key "slug" as slug. Making this configurable is in process.
 
 ## Usage
 
@@ -44,9 +34,85 @@ If you delete a file in your vault, your file in S3 or git won't be deleted. You
 4. Use whatever you like to generate these files into a static site. Hexo or Hugo are good choice for static site generation.
 5. If you use GitHub actions to build/deploy, try using the "Trigger GitHub Action deploy" button to simplify workflow: update your site without leaving obsidian!
 
+## Transformation Details
+
+### Links
+
+#### Which links will be transformed?
+
+Every link that obsidian thinks is a wiki link. Basically, any link that doesn't target to an URL is a wiki link.
+
+It may either in form of `[[Note]]`, `![[Embedded]]`, or `[title](not/a/url)`, `![alt](/not/a/url)`.
+
+#### How will they be transformed?
+
+Say that we have the following files in vault:
+
+Ref.md:
+```markdown
+---
+title: Ref
+slug: ref-slug
+published: true
+---
+
+Note to be linked.
+
+## Section example
+```
+
+Note.md:
+```markdown
+<!-- frontmatter omitted -->
+## Sec 1
+[[Ref]]
+[[Ref|Display Name]]
+## Sec 2
+[[Ref#section-example]]
+[[Ref#section-example|Display Name]]
+[[#Sec 1]]
+[[#Sec 2|Display Name]]
+[[NoteThatNotExist]]
+## Sec 3
+![[image.png]]
+![[imageThatDoesNotExist.png]]
+```
+
+An options "Post prefix" is set to "/post/" in this example. This is used to generate path in the URL.
+
+When using "Abort" option for image, the plugin refused to export Note.md. If use base64, the transform result will be:
+
+```markdown
+<!-- frontmatter omitted -->
+## Sec 1
+[Ref] (/post/ref-slug)
+[Display Name] (/post/ref-slug)
+## Sec 2
+[Ref > section-example] (/post/ref-slug#section-example)
+[Display Name] (/post/ref-slug#section-example)
+[Sec 1] (#sec-1)
+[Display Name] (#sec-2)
+[[NoteThatNotExist]]
+## Sec 3
+![image.png] [img1]
+![[imageThatDoesNotExist]]
+
+[img1]:
+data: image/png;base64, omitted
+```
+
+### Tags
+
+Tags in frontmatter and content will be merged into frontmatter, then remove "#" and anything before the last "/".
+
 ## Known Issues
 
 - Not working on Obsidian on iOS: Probably caused by the `lighting-fs` library, which is used for git upload.
+
+## Roadmap
+
+- [ ] Support more upload methods (add back the S3 method that v1 supports).
+- [ ] Support custom handler for image.
 
 ## Contributing
 
