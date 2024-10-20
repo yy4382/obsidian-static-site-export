@@ -1,7 +1,11 @@
 # Static Site MD Exporter for Obsidian
 
 > [!WARNING]
-> Undergoing large refactor. v2.0 may come soon, which remove some features in v1, and will enable more configurations! 
+> Undergoing large refactor. v2.0 will is already in beta, which remove some features in v1, and will enable more configurations! 
+> 
+> To use v2 beta, you can either download the latest release or use [TfTHacker/obsidian42-brat](https://github.com/TfTHacker/obsidian42-brat)
+>
+> The following document is for v2, for v1.x, see [README from git history](https://github.com/yy4382/obsidian-static-site-export/tree/f09c624a713347a807b8e2d3166f315cc38ad407)
 
 Integrate Obsidian into your blog writing process!
 
