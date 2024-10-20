@@ -28,7 +28,6 @@
 	},
 	"dependencies": {
 		"@isomorphic-git/lightning-fs": "^4.6.0",
-		"buffer": "^6.0.3",
 		"defu": "^6.1.4",
 		"github-slugger": "^2.0.0",
 		"isomorphic-git": "^1.27.1",
