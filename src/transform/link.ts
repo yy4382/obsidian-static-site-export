@@ -36,7 +36,8 @@ async function transformLink(
 		sourceTFile.path,
 	);
 	if (targetFile == null) {
-		return link.displayText ?? link.link;
+		console.warn(`link not found: ${link}`);
+		return link.original;
 	}
 	const imgExt = ["png", "jpg", "jpeg", "gif", "svg", "webp"];
 	if (imgExt.includes(targetFile.extension)) {
@@ -47,8 +48,14 @@ async function transformLink(
 		{
 			const slug = getSlug(targetFile, ctx);
 			if (slug)
-				return `[${link.displayText ?? link.link}](${slugToPath(slug, ctx)}${link.link.includes("#") ? "#" + slugger(link.link.split("#")[1]) : ""})`;
+				if (targetFile.path === sourceTFile.path && link.link.startsWith("#"))
+					return `[${link.displayText ?? link.link}](#${slugger(link.link.split("#")[1])})`;
+				else
+					return `[${link.displayText ?? link.link}](${slugToPath(slug, ctx)}${link.link.includes("#") ? "#" + slugger(link.link.split("#")[1]) : ""})`;
 			else {
+				console.warn(
+					`link target not published: ${targetFile.name} from ${sourceTFile.name}`,
+				);
 				return link.displayText ?? link.link;
 			}
 		}
