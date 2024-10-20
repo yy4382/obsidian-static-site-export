@@ -47,16 +47,21 @@ async function transformLink(
 	} else if (targetFile.extension === "md") {
 		{
 			const slug = getSlug(targetFile, ctx);
-			if (slug)
-				if (targetFile.path === sourceTFile.path && link.link.startsWith("#"))
-					return `[${link.displayText ?? link.link}](#${slugger(link.link.split("#")[1])})`;
-				else
-					return `[${link.displayText ?? link.link}](${slugToPath(slug, ctx)}${link.link.includes("#") ? "#" + slugger(link.link.split("#")[1]) : ""})`;
-			else {
+			const displayText = link.displayText ?? link.link;
+			if (slug) {
+				const fragment = link.link.includes("#")
+					? slugger(link.link.split("#")[1])
+					: undefined;
+				if (targetFile.path === sourceTFile.path && fragment) {
+					return `[${displayText}](#${fragment})`;
+				} else {
+					return `[${displayText}](${slugToPath(slug, ctx) + (fragment ? "#" + fragment : "")})`;
+				}
+			} else {
 				console.warn(
 					`link target not published: ${targetFile.name} from ${sourceTFile.name}`,
 				);
-				return link.displayText ?? link.link;
+				return displayText;
 			}
 		}
 	} else {
