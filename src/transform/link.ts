@@ -36,7 +36,7 @@ async function transformLink(
 		sourceTFile.path,
 	);
 	if (targetFile == null) {
-		console.warn(`link not found: ${link}`);
+		console.warn(`link not found:`, link.original);
 		return link.original;
 	}
 	const imgExt = ["png", "jpg", "jpeg", "gif", "svg", "webp"];
