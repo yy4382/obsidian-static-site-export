@@ -105,10 +105,6 @@ data: image/png;base64, omitted
 
 Tags in frontmatter and content will be merged into frontmatter, then remove "#" and anything before the last "/".
 
-## Known Issues
-
-- Not working on Obsidian on iOS: Probably caused by the `lighting-fs` library, which is used for git upload.
-
 ## Roadmap
 
 - [ ] Support more upload methods (add back the S3 method that v1 supports).
