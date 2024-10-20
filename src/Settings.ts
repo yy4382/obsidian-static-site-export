@@ -37,7 +37,7 @@ export type SSSettings = {
 
 export const DEFAULT_SETTINGS: SSSettings = {
 	transformer: {
-		post_prefix: "post/",
+		post_prefix: "/post/",
 		imageTransformer: "abort",
 	},
 	uploader: {
@@ -185,12 +185,12 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Post prefix")
 			.setDesc(
-				`The prefix of the post URL with trailing slash. Default to 'post/'.
+				`The prefix of the post URL with trailing slash. Default to '/post/'.
 				e.g. A link to a note with slug 'abc' will be rendered as '/post/abc'.`,
 			)
 			.addText((text) =>
 				text
-					.setPlaceholder("post/")
+					.setPlaceholder("/post/")
 					.setValue(settings.transformer.post_prefix)
 					.onChange(async (value) => {
 						settings.transformer.post_prefix = value;
