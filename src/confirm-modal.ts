@@ -37,6 +37,10 @@ export class TransformConfirmModal extends ConfirmModal {
 
 		this.setTitle("Confirm Export");
 
+		contentEl.createEl("p", {
+			text: `You are about to export ${this.posts.length} files.`,
+		});
+
 		const innerContentEl = contentEl.createDiv({ cls: "cfm-inner-content" });
 		this.posts.forEach((post) => {
 			const { filename, content } = stringifyPost(post);
