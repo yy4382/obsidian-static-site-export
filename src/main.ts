@@ -32,7 +32,7 @@ export default class Ob2StaticPlugin extends Plugin {
 			"All files - Static Site MD Export",
 			async () => {
 				new Notice("Starting process");
-				const tFiles = this.app.vault.getFiles();
+				const tFiles = this.app.vault.getMarkdownFiles();
 				if (tFiles === null) {
 					new Notice("No file active");
 					return;
