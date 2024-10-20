@@ -1,4 +1,4 @@
-import { TFile, Pos } from "obsidian";
+import { TFile, Pos, Notice } from "obsidian";
 import { ImageTransformer } from "@/Image/base";
 import type { TransformCtx, Entry, Post } from "@/type";
 import { processLinks } from "./link";
@@ -86,6 +86,11 @@ function validateEntry(post: Entry): Post | undefined {
 	if (!post.meta) return undefined;
 	if (!post.meta.frontmatterPosition) return undefined;
 	if (!post.meta.frontmatter) return undefined;
+	if (!post.meta.frontmatter.published) return undefined;
+	if (!post.meta.frontmatter.title || !post.meta.frontmatter.slug) {
+		new Notice(`Post "${post.tFile.name}" does not have a title or slug`);
+		return undefined;
+	}
 	return post as Post;
 }
 
