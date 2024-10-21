@@ -1,6 +1,6 @@
 import { Modal, Setting, type App } from "obsidian";
 
-import { Post } from "@/type";
+import type { Post } from "@/type";
 import { stringifyPost } from "./utils/stringifyPost";
 import { PromiseHandler } from "./utils/createPromise";
 

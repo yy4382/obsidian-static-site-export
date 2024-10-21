@@ -1,6 +1,5 @@
-import { Post } from "@/type";
-import { ReferenceCache, TFile } from "obsidian";
-import type { TransformCtx } from "@/type";
+import type { Post, TransformCtx } from "@/type";
+import type { ReferenceCache, TFile } from "obsidian";
 
 export class ImageTransformer {
 	ctx: TransformCtx;

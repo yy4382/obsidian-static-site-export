@@ -1,5 +1,5 @@
 import { App, CachedMetadata, TFile, Notice } from "obsidian";
-import { SSSettings } from "@/Settings";
+import type { SSSettings } from "@/Settings";
 
 export interface Entry {
 	tFile: TFile;

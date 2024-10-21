@@ -1,4 +1,4 @@
-import { Post } from "@/type";
+import type { Post } from "@/type";
 import { stringify } from "yaml";
 
 export const stringifyPost = (
