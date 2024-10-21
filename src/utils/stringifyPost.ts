@@ -1,5 +1,5 @@
 import { Post } from "@/type";
-import { stringifyYaml } from "obsidian";
+import { stringify } from "yaml";
 
 export const stringifyPost = (
 	post: Post,
@@ -7,7 +7,7 @@ export const stringifyPost = (
 	const filename: string =
 		(post.meta.frontmatter.slug ?? post.tFile.basename) + ".md";
 
-	const frontmatter = stringifyYaml(post.meta.frontmatter);
-	const content = `---\n${frontmatter}---\n\n` + post.content.trimStart();
+	const frontmatter = stringify(post.meta.frontmatter);
+	const content = `---\n${frontmatter}---\n\n` + post.content.trim() + "\n";
 	return { filename, content };
 };

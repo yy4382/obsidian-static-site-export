@@ -1,4 +1,4 @@
-import { Notice, ReferenceCache, TFile } from "obsidian";
+import type { ReferenceCache, TFile } from "obsidian";
 import { ImageTransformer } from "@/Image/base";
 
 export class AbortImageTransformer extends ImageTransformer {
@@ -7,7 +7,7 @@ export class AbortImageTransformer extends ImageTransformer {
 		_sourceTFile: TFile,
 		_targetTFile: TFile,
 	): Promise<string> {
-		new Notice(
+		this.ctx.notice(
 			"Having image, abort. Use other image transformer or use non-wiki link syntax. " +
 				`at ${_sourceTFile.path}, ${_link.position.start.line}, ${_link.position.start.col} linked to ${_targetTFile.path}`,
 		);
