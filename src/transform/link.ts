@@ -58,7 +58,7 @@ async function transformLink(
 				console.warn(
 					`link target not published: ${targetFile.name} from ${sourceTFile.name}`,
 				);
-				return displayText;
+				return link.original;
 			}
 		}
 	} else {
@@ -67,7 +67,7 @@ async function transformLink(
 				`unknown ext ${targetFile.extension} for ${targetFile.name}`,
 			);
 
-			return link.displayText ?? link.link;
+			return link.original;
 		}
 	}
 }

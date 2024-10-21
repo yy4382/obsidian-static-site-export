@@ -83,12 +83,11 @@ const readAndFilterValidPosts = async (
  * @returns The validated post if it contains the required metadata, otherwise `undefined`.
  */
 function validateEntry(post: Entry, ctx: TransformCtx): Post | undefined {
-	if (!post.meta) return undefined;
-	if (!post.meta.frontmatterPosition) return undefined;
-	if (!post.meta.frontmatter) return undefined;
+	if (!(post.meta && post.meta.frontmatterPosition && post.meta.frontmatter))
+		return undefined;
 	if (!post.meta.frontmatter.published) return undefined;
-	if (!post.meta.frontmatter.title || !post.meta.frontmatter.slug) {
-		ctx.notice(`Post "${post.tFile.name}" does not have a title or slug`);
+	if (!post.meta.frontmatter.slug) {
+		ctx.notice(`Post "${post.tFile.name}" does not have slug`);
 		return undefined;
 	}
 	return post as Post;
