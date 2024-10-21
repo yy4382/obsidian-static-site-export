@@ -27,6 +27,7 @@ type UploaderSettings = {
 
 type TransformSettings = {
 	post_prefix: string;
+	transformTags: boolean;
 	imageTransformer: "base64" | "abort";
 };
 
@@ -39,6 +40,7 @@ export const DEFAULT_SETTINGS: SSSettings = {
 	transformer: {
 		post_prefix: "/post/",
 		imageTransformer: "abort",
+		transformTags: true,
 	},
 	uploader: {
 		type: "git",
@@ -194,6 +196,20 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 					.setValue(settings.transformer.post_prefix)
 					.onChange(async (value) => {
 						settings.transformer.post_prefix = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Transform tags")
+			.setDesc(
+				'Merge tags into frontmatter, remove "#" and only take the last part of /',
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(settings.transformer.transformTags)
+					.onChange(async (value) => {
+						settings.transformer.transformTags = value;
 						await this.plugin.saveSettings();
 					}),
 			);

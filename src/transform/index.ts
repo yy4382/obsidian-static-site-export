@@ -101,7 +101,7 @@ async function normalizePost(
 	const actions: TransformAction[] = [
 		[post.meta.frontmatterPosition, ""],
 		...(await processLinks(post, ctx)),
-		...transformTag(post),
+		...(ctx.settings.transformer.transformTags ? transformTag(post) : []),
 	];
 	return applyActions(post, actions);
 }
