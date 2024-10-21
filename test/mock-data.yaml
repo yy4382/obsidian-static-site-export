@@ -302,6 +302,45 @@ Transform links:
         [[Ref Not Publish#Section example|Display]]
         ![[Ref Not Publish#Section example|Display]]
       filename: main.md
+  Transform link to unknown extension:
+    input:
+      files:
+        - tFile:
+            basename: Transform link to unknown ext
+            extension: md
+            name: Transform link to unknown ext.md
+            path: Tests/Transform link to unknown ext.md
+          content: |-
+            ---
+            published: true
+            slug: main
+            title: Transform sec link to unknown ext
+            ---
+            [[Pdf.pdf]]
+            [[Pdf.pdf|Display]]
+          meta: >-
+            {"links":[{"position":{"start":{"line":5,"col":0,"offset":76},"end":{"line":5,"col":11,"offset":87}},"link":"Pdf.pdf","original":"[[Pdf.pdf]]","displayText":"Pdf.pdf"},{"position":{"start":{"line":6,"col":0,"offset":88},"end":{"line":6,"col":19,"offset":107}},"link":"Pdf.pdf","original":"[[Pdf.pdf|Display]]","displayText":"Display"}],"sections":[{"type":"yaml","position":{"start":{"line":0,"col":0,"offset":0},"end":{"line":4,"col":3,"offset":75}}},{"type":"paragraph","position":{"start":{"line":5,"col":0,"offset":76},"end":{"line":6,"col":19,"offset":107}}}],"frontmatter":{"published":true,"slug":"main","title":"Transform sec link to unknown ext"},"frontmatterPosition":{"start":{"line":0,"col":0,"offset":0},"end":{"line":4,"col":3,"offset":75}},"frontmatterLinks":[]}
+        - tFile:
+            basename: Pdf
+            extension: pdf
+            name: Pdf.pdf
+            path: Parent/Pdf.pdf
+          content: ""
+          meta: "{}"
+
+      settings: *default-settings
+    output:
+      filename: main.md
+      content: |
+        ---
+        published: true
+        slug: main
+        title: Transform sec link to unknown ext
+        tags: []
+        ---
+
+        [[Pdf.pdf]]
+        [[Pdf.pdf|Display]]
 
 Transform Errors:
   self not published:
@@ -338,3 +377,42 @@ Transform Errors:
 
       settings: *default-settings
     output: null
+
+Transform tags:
+  Transform tags:
+    input:
+      files:
+        - tFile:
+            basename: Transform tags
+            extension: md
+            name: Transform tags.md
+            path: Tests/Transform tags.md
+          content: |-
+            ---
+            published: true
+            slug: transform-tags
+            tags:
+              - frontmatter
+              - "#hashtag"
+              - nested/tag
+              - "#hash-nested/tag"
+            ---
+            #content-tag
+
+            #nested2/nested/content-tag
+          meta: >-
+            {"tags":[{"position":{"start":{"line":9,"col":0,"offset":120},"end":{"line":9,"col":12,"offset":132}},"tag":"#content-tag"},{"position":{"start":{"line":11,"col":0,"offset":134},"end":{"line":11,"col":27,"offset":161}},"tag":"#nested2/nested/content-tag"}],"sections":[{"type":"yaml","position":{"start":{"line":0,"col":0,"offset":0},"end":{"line":8,"col":3,"offset":119}}},{"type":"paragraph","position":{"start":{"line":9,"col":0,"offset":120},"end":{"line":9,"col":12,"offset":132}}},{"type":"paragraph","position":{"start":{"line":11,"col":0,"offset":134},"end":{"line":11,"col":27,"offset":161}}}],"frontmatter":{"published":true,"slug":"transform-tags","tags":["frontmatter","#hashtag","nested/tag","#hash-nested/tag"]},"frontmatterPosition":{"start":{"line":0,"col":0,"offset":0},"end":{"line":8,"col":3,"offset":119}},"frontmatterLinks":[]}
+      settings: *default-settings
+    output:
+      content: |
+        ---
+        published: true
+        slug: transform-tags
+        tags:
+          - content-tag
+          - frontmatter
+          - hashtag
+          - tag
+        ---
+
+      filename: transform-tags.md

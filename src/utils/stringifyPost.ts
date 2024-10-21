@@ -8,6 +8,6 @@ export const stringifyPost = (
 		(post.meta.frontmatter.slug ?? post.tFile.basename) + ".md";
 
 	const frontmatter = stringify(post.meta.frontmatter);
-	const content = `---\n${frontmatter}---\n\n` + post.content.trim() + "\n";
-	return { filename, content };
+	const content = `---\n${frontmatter}---\n\n` + post.content.trim();
+	return { filename, content: content.trim() + "\n" };
 };
