@@ -1,5 +1,5 @@
 import { App, Modal, Notice, Plugin, TFile } from "obsidian";
-import { SSSettings } from "@/type";
+import { SSSettings, TransformCtx } from "@/type";
 import { DEFAULT_SETTINGS, Ob2StaticSettingTab } from "@/Settings";
 import { transform } from "./transform";
 import { defu } from "defu";
@@ -57,7 +57,16 @@ export default class Ob2StaticPlugin extends Plugin {
 
 	async process(tFiles: TFile[]): Promise<void> {
 		const posts = await transform(tFiles, {
-			app: this.app,
+			// Doing these ugly things to avoid losing "this"
+			cachedRead: (...args: Parameters<TransformCtx["cachedRead"]>) =>
+				this.app.vault.cachedRead(...args),
+			readBinary: (...args: Parameters<TransformCtx["readBinary"]>) =>
+				this.app.vault.readBinary(...args),
+			getFileMetadata: (...args: Parameters<TransformCtx["getFileMetadata"]>) =>
+				this.app.metadataCache.getFileCache(...args),
+			resolveLink: (...args: Parameters<TransformCtx["resolveLink"]>) =>
+				this.app.metadataCache.getFirstLinkpathDest(...args),
+			notice: (...args) => new Notice(...args),
 			settings: this.settings,
 		});
 

@@ -1,4 +1,4 @@
-import { TFile, Pos, Notice } from "obsidian";
+import type { TFile, Pos } from "obsidian";
 import { ImageTransformer } from "@/Image/base";
 import type { TransformCtx, Entry, Post } from "@/type";
 import { processLinks } from "./link";
@@ -68,12 +68,12 @@ const readAndFilterValidPosts = async (
 		await Promise.all(
 			postFiles.map(async (tFile: TFile) => ({
 				tFile: tFile,
-				content: await ctx.app.vault.cachedRead(tFile),
-				meta: ctx.app.metadataCache.getFileCache(tFile),
+				content: await ctx.cachedRead(tFile),
+				meta: ctx.getFileMetadata(tFile),
 			})),
 		)
 	)
-		.map(validateEntry)
+		.map((post) => validateEntry(post, ctx))
 		.filter((post): post is Post => post !== undefined);
 
 /**
@@ -82,13 +82,13 @@ const readAndFilterValidPosts = async (
  * @param post - The entry to validate.
  * @returns The validated post if it contains the required metadata, otherwise `undefined`.
  */
-function validateEntry(post: Entry): Post | undefined {
+function validateEntry(post: Entry, ctx: TransformCtx): Post | undefined {
 	if (!post.meta) return undefined;
 	if (!post.meta.frontmatterPosition) return undefined;
 	if (!post.meta.frontmatter) return undefined;
 	if (!post.meta.frontmatter.published) return undefined;
 	if (!post.meta.frontmatter.title || !post.meta.frontmatter.slug) {
-		new Notice(`Post "${post.tFile.name}" does not have a title or slug`);
+		ctx.notice(`Post "${post.tFile.name}" does not have a title or slug`);
 		return undefined;
 	}
 	return post as Post;

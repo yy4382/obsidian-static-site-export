@@ -18,7 +18,7 @@ export class Base64Transformer extends ImageTransformer {
 			return `![${link.displayText ?? link.link}][${tagName}]`;
 		}
 		const tagName = `img${this.fileMap.size + 1}`;
-		const arraybuffer = await this.ctx.app.vault.readBinary(targetTFile);
+		const arraybuffer = await this.ctx.readBinary(targetTFile);
 
 		// Convert arraybuffer to base64
 		const base64 = btoa(

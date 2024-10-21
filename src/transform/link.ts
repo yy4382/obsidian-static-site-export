@@ -1,5 +1,5 @@
 import type { Post } from "@/type";
-import { ReferenceCache, TFile } from "obsidian";
+import type { ReferenceCache, TFile } from "obsidian";
 import { slug as slugger } from "github-slugger";
 import type { TransformAction, TransformCtxWithImage } from "@/transform/index";
 
@@ -31,10 +31,7 @@ async function transformLink(
 	sourceTFile: TFile,
 	ctx: TransformCtxWithImage,
 ): Promise<string> {
-	const targetFile = ctx.app.metadataCache.getFirstLinkpathDest(
-		link.link.split("#")[0],
-		sourceTFile.path,
-	);
+	const targetFile = ctx.resolveLink(link.link.split("#")[0], sourceTFile.path);
 	if (targetFile == null) {
 		console.warn(`link not found:`, link.original);
 		return link.original;
@@ -76,8 +73,7 @@ async function transformLink(
 }
 
 function getSlug(file: TFile, ctx: TransformCtxWithImage): string | null {
-	const { published, slug } =
-		ctx.app.metadataCache.getFileCache(file)?.frontmatter ?? {};
+	const { published, slug } = ctx.getFileMetadata(file)?.frontmatter ?? {};
 
 	if (!published) return null;
 	return slug ?? null;

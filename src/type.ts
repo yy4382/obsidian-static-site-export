@@ -1,4 +1,4 @@
-import { App, CachedMetadata, TFile } from "obsidian";
+import { App, CachedMetadata, TFile, Notice } from "obsidian";
 import { SSSettings } from "@/Settings";
 
 export interface Entry {
@@ -8,9 +8,14 @@ export interface Entry {
 }
 
 export interface TransformCtx {
-	app: App;
+	cachedRead: App["vault"]["cachedRead"];
+	readBinary: App["vault"]["readBinary"];
+	getFileMetadata: App["metadataCache"]["getFileCache"];
+	resolveLink: App["metadataCache"]["getFirstLinkpathDest"];
+	notice: (...args: ConstructorParameters<typeof Notice>) => void;
 	settings: SSSettings;
 }
+
 type CachedMetadataPost = Omit<
 	CachedMetadata,
 	"frontmatter" | "frontmatterPosition"
