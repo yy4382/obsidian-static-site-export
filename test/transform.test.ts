@@ -2,11 +2,13 @@ import { test, describe, assert } from "vitest";
 import { transform } from "../src/transform";
 import { MockData, makeData } from "./mock-data";
 
-import dataJson from "./mock-data.json";
 import { stringifyPost } from "@/utils/stringifyPost";
+import { parse } from "yaml";
+import fs from "fs/promises";
 
-//@ts-expect-error mock for testing
-const data = dataJson as Record<string, Record<string, MockData>>;
+const data = parse(
+	await fs.readFile("./test/mock-data.yaml", "utf-8"),
+) as Record<string, Record<string, MockData>>;
 
 for (const [name, testData] of Object.entries(data)) {
 	describe(name, () => {

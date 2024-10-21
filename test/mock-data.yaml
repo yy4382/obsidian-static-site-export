@@ -1,0 +1,106 @@
+Transform links:
+  Transform sec link to self:
+    input:
+      files:
+        - tFile:
+            basename: Transform link to self
+            extension: md
+            name: Transform link to self.md
+            path: Tests/Transform link to self.md
+          content: |
+            ---
+            published: true
+            slug: main
+            title: Transform sec link to self
+            ---
+            [[#sec]]
+            ![[#sec]]
+            [[#sec|display]]
+            ![[#sec|display]]
+
+            ## sec
+          meta: >-
+            {"links":[{"link":"#sec","original":"[[#sec]]","displayText":"sec","position":{"start":{"line":5,"col":0,"offset":69},"end":{"line":5,"col":8,"offset":77}}},{"link":"#sec","original":"[[#sec|display]]","displayText":"display","position":{"start":{"line":7,"col":0,"offset":88},"end":{"line":7,"col":16,"offset":104}}}],"embeds":[{"link":"#sec","original":"![[#sec]]","displayText":"sec","position":{"start":{"line":6,"col":0,"offset":78},"end":{"line":6,"col":9,"offset":87}}},{"link":"#sec","original":"![[#sec|display]]","displayText":"display","position":{"start":{"line":8,"col":0,"offset":105},"end":{"line":8,"col":17,"offset":122}}}],"headings":[{"heading":"sec","level":2,"position":{"start":{"line":10,"col":0,"offset":124},"end":{"line":10,"col":6,"offset":130}}}],"sections":[{"type":"yaml","position":{"start":{"line":0,"col":0,"offset":0},"end":{"line":4,"col":3,"offset":68}}},{"type":"paragraph","position":{"start":{"line":5,"col":0,"offset":69},"end":{"line":8,"col":17,"offset":122}}},{"type":"heading","position":{"start":{"line":10,"col":0,"offset":124},"end":{"line":10,"col":6,"offset":130}}}],"frontmatter":{"published":true,"slug":"main","title":"Transform sec link to self"},"frontmatterLinks":[],"v":1,"frontmatterPosition":{"start":{"line":0,"col":0,"offset":0},"end":{"line":4,"col":3,"offset":68}}}
+      settings:
+        imageTransformer: abort
+        post_prefix: /posts/
+        transformTags: true
+    output:
+      content: |
+        ---
+        published: true
+        slug: main
+        title: Transform sec link to self
+        tags: []
+        ---
+
+        [sec](#sec)
+        [sec](#sec)
+        [display](#sec)
+        [display](#sec)
+
+        ## sec
+      filename: main.md
+  Transform link to md:
+    input:
+      files:
+        - tFile:
+            basename: Transform link to md
+            extension: md
+            name: Transform link to md.md
+            path: Tests/Transform link to md.md
+          content: |
+            ---
+            published: true
+            slug: main
+            title: Transform sec link to md
+            ---
+            [[Ref]]
+            ![[Ref]]
+            [[Ref#Section example]]
+            ![[Ref#Section example]]
+            [[Ref|Display]]
+            ![[Ref|Display]]
+            [[Ref#Section example|Display]]
+            ![[Ref#Section example|Display]]
+          meta: >-
+            {"links":[{"position":{"start":{"line":5,"col":0,"offset":67},"end":{"line":5,"col":7,"offset":74}},"link":"Ref","original":"[[Ref]]","displayText":"Ref"},{"position":{"start":{"line":7,"col":0,"offset":84},"end":{"line":7,"col":23,"offset":107}},"link":"Ref#Section example","original":"[[Ref#Section example]]","displayText":"Ref > Section example"},{"position":{"start":{"line":9,"col":0,"offset":133},"end":{"line":9,"col":15,"offset":148}},"link":"Ref","original":"[[Ref|Display]]","displayText":"Display"},{"position":{"start":{"line":11,"col":0,"offset":166},"end":{"line":11,"col":31,"offset":197}},"link":"Ref#Section example","original":"[[Ref#Section example|Display]]","displayText":"Display"}],"embeds":[{"position":{"start":{"line":6,"col":0,"offset":75},"end":{"line":6,"col":8,"offset":83}},"link":"Ref","original":"![[Ref]]","displayText":"Ref"},{"position":{"start":{"line":8,"col":0,"offset":108},"end":{"line":8,"col":24,"offset":132}},"link":"Ref#Section example","original":"![[Ref#Section example]]","displayText":"Ref > Section example"},{"position":{"start":{"line":10,"col":0,"offset":149},"end":{"line":10,"col":16,"offset":165}},"link":"Ref","original":"![[Ref|Display]]","displayText":"Display"},{"position":{"start":{"line":12,"col":0,"offset":198},"end":{"line":12,"col":32,"offset":230}},"link":"Ref#Section example","original":"![[Ref#Section example|Display]]","displayText":"Display"}],"sections":[{"type":"yaml","position":{"start":{"line":0,"col":0,"offset":0},"end":{"line":4,"col":3,"offset":66}}},{"type":"paragraph","position":{"start":{"line":5,"col":0,"offset":67},"end":{"line":12,"col":32,"offset":230}}}],"frontmatter":{"published":true,"slug":"main","title":"Transform sec link to md"},"frontmatterPosition":{"start":{"line":0,"col":0,"offset":0},"end":{"line":4,"col":3,"offset":66}},"frontmatterLinks":[]}
+        - tFile:
+            basename: Ref
+            extension: md
+            name: Ref.md
+            path: Parent/Ref.md
+          content: |
+            ---
+            title: Ref
+            slug: ref-slug
+            published: true
+            ---
+
+            Note to be linked.
+
+            ## Section example
+          meta: >-
+            {"headings":[{"heading":"Section example","level":2,"position":{"start":{"line":8,"col":0,"offset":71},"end":{"line":8,"col":18,"offset":89}}}],"sections":[{"type":"yaml","position":{"start":{"line":0,"col":0,"offset":0},"end":{"line":4,"col":3,"offset":49}}},{"type":"paragraph","position":{"start":{"line":6,"col":0,"offset":51},"end":{"line":6,"col":18,"offset":69}}},{"type":"heading","position":{"start":{"line":8,"col":0,"offset":71},"end":{"line":8,"col":18,"offset":89}}}],"frontmatter":{"title":"Ref","slug":"ref-slug","published":true},"frontmatterLinks":[],"v":1,"frontmatterPosition":{"start":{"line":0,"col":0,"offset":0},"end":{"line":4,"col":3,"offset":49}}}
+      settings:
+        imageTransformer: abort
+        post_prefix: /posts/
+        transformTags: true
+    output:
+      content: |
+        ---
+        published: true
+        slug: main
+        title: Transform sec link to md
+        tags: []
+        ---
+
+        [Ref](/posts/ref-slug)
+        [Ref](/posts/ref-slug)
+        [Ref > Section example](/posts/ref-slug#section-example)
+        [Ref > Section example](/posts/ref-slug#section-example)
+        [Display](/posts/ref-slug)
+        [Display](/posts/ref-slug)
+        [Display](/posts/ref-slug#section-example)
+        [Display](/posts/ref-slug#section-example)
+      filename: main.md
