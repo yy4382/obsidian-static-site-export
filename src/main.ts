@@ -1,5 +1,5 @@
-import { App, Modal, Notice, Plugin, TFile } from "obsidian";
-import { SSSettings, TransformCtx } from "@/type";
+import { type App, Modal, Notice, Plugin, type TFile } from "obsidian";
+import type { SSSettings, TransformCtx } from "@/type";
 import { DEFAULT_SETTINGS, Ob2StaticSettingTab } from "@/Settings";
 import { transform } from "./transform";
 import { defu } from "defu";

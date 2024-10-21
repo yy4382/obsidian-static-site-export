@@ -1,4 +1,4 @@
-import { SSSettings, TransformCtx } from "@/type";
+import type { SSSettings, TransformCtx } from "@/type";
 import type { TFile } from "obsidian";
 export type MockData = {
 	input: {
@@ -12,6 +12,7 @@ export type MockData = {
 	output: {
 		content: string;
 		filename: string;
+		error?: string;
 	};
 };
 
@@ -39,14 +40,41 @@ export const makeData = (data: MockData): [TFile, TransformCtx] => {
 			}
 			throw new Error("unexpected file");
 		},
-		resolveLink: () => {
-			return files[1]?.tFile ?? files[0].tFile;
+		resolveLink: (linkPath) => {
+			if (!linkPath) return files[0].tFile;
+			for (const file of files) {
+				if (file.tFile.name === linkPath || file.tFile.basename === linkPath)
+					return file.tFile;
+			}
+			return null;
 		},
-		readBinary: async () => new ArrayBuffer(10),
-		notice: () => {},
+		readBinary: async (tf: TFile) => {
+			for (const file of files) {
+				if (tf.path === file.tFile.path) {
+					return stringToArrayBuffer(file.content);
+				}
+			}
+			throw new Error("unexpected file");
+		},
+		notice: (msg) => {
+			if (typeof msg === "string") {
+				console.log(`[NOTICE] ${msg}`);
+			}
+			console.log(`[NOTICE]`, msg);
+		},
 	} satisfies TransformCtx;
 	return [files[0].tFile, ctx];
 };
+
+function stringToArrayBuffer(str: string) {
+	const buf = new ArrayBuffer(str.length * 2); // 每个字符2字节
+	const bufView = new Uint16Array(buf);
+	for (let i = 0; i < str.length; i++) {
+		bufView[i] = str.charCodeAt(i);
+	}
+	return buf;
+}
+
 /*
 const app: App = undefined;
 
