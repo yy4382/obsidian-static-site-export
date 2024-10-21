@@ -7,6 +7,8 @@ export class ImageTransformer {
 		this.ctx = ctx;
 	}
 	async onBeforeTransform() {}
+	
+	/* v8 ignore next 14 */
 	/**
 	 *
 	 * @param _link
