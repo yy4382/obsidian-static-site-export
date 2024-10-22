@@ -113,6 +113,9 @@ const readAndFilterValidPosts = async (
 		)
 	).filter((post): post is Post => {
 		if (post.meta instanceof Error) {
+			if (postFiles.length === 1) {
+				ctx.notice(`Error in file "${post.tFile.name}": ${post.meta.message}`);
+			}
 			return false;
 		}
 		return true;
