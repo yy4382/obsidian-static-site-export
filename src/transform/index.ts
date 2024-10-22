@@ -87,7 +87,7 @@ export async function transform(
 	const transformedPosts = await Promise.all(
 		originalPosts.map((post) => normalizePost(post, ctxWithImage)),
 	);
-	
+
 	await imageTf.onFinish();
 	return transformedPosts;
 }
@@ -113,7 +113,6 @@ const readAndFilterValidPosts = async (
 		)
 	).filter((post): post is Post => {
 		if (post.meta instanceof Error) {
-			ctx.notice(`Error validating "${post.tFile.path}": ${post.meta.message}`);
 			return false;
 		}
 		return true;
