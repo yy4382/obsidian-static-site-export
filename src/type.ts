@@ -1,2 +1,2 @@
 export type { SSSettings } from "./Settings";
-export type { Post } from "./transform";
+export type { Post, TransformCtx } from "./transform";
