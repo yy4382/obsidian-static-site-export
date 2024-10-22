@@ -38,7 +38,8 @@
 		"github-slugger": "^2.0.0",
 		"isomorphic-git": "^1.27.1",
 		"ramda": "^0.30.1",
-		"yaml": "^2.6.0"
+		"yaml": "^2.6.0",
+		"zod": "^3.23.8"
 	},
 	"packageManager": "pnpm@9.1.1+sha256.9551e803dcb7a1839fdf5416153a844060c7bce013218ce823410532504ac10b"
 }

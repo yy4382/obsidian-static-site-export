@@ -1,9 +1,18 @@
-import type { TFile, Pos } from "obsidian";
+import type {
+	TFile,
+	Pos,
+	CachedMetadata,
+	FrontMatterCache,
+	App,
+	Notice,
+} from "obsidian";
 import { ImageTransformer } from "@/Image/base";
-import type { TransformCtx, Entry, Post } from "@/type";
 import { processLinks } from "./link";
 import { transformTag } from "./tag";
 import { getImageTransformer } from "@/Image";
+import { validateMeta } from "./validate";
+import { z } from "zod";
+import { SSSettings } from "@/type";
 
 /*
 Transform pipeline:
@@ -20,6 +29,34 @@ Transform pipeline:
 	- Run all functions in "actions" array
 */
 
+export type CachedMetadataPost = Omit<
+	CachedMetadata,
+	"frontmatter" | "frontmatterPosition"
+> & {
+	frontmatter: z.infer<typeof frontmatterSchema> & FrontMatterCache;
+	frontmatterPosition: NonNullable<CachedMetadata["frontmatterPosition"]>;
+};
+export const frontmatterSchema = z
+	.object({
+		slug: z.string(),
+		published: z.literal(true),
+	})
+	.passthrough();
+
+export interface TransformCtx {
+	cachedRead: App["vault"]["cachedRead"];
+	readBinary: App["vault"]["readBinary"];
+	getFileMetadata: App["metadataCache"]["getFileCache"];
+	resolveLink: App["metadataCache"]["getFirstLinkpathDest"];
+	notice: (...args: ConstructorParameters<typeof Notice>) => void;
+	settings: SSSettings;
+}
+
+export interface Post {
+	tFile: TFile;
+	content: string;
+	meta: CachedMetadataPost;
+}
 export type TransformCtxWithImage = TransformCtx & {
 	imageTf: ImageTransformer;
 };
@@ -46,9 +83,11 @@ export async function transform(
 	))(ctx);
 	await imageTf.onBeforeTransform();
 	const ctxWithImage: TransformCtxWithImage = { ...ctx, imageTf };
+
 	const transformedPosts = await Promise.all(
 		originalPosts.map((post) => normalizePost(post, ctxWithImage)),
 	);
+	
 	await imageTf.onFinish();
 	return transformedPosts;
 }
@@ -69,29 +108,16 @@ const readAndFilterValidPosts = async (
 			postFiles.map(async (tFile: TFile) => ({
 				tFile: tFile,
 				content: await ctx.cachedRead(tFile),
-				meta: ctx.getFileMetadata(tFile),
+				meta: validateMeta(tFile, ctx),
 			})),
 		)
-	)
-		.map((post) => validateEntry(post, ctx))
-		.filter((post): post is Post => post !== undefined);
-
-/**
- * Validates the given entry to ensure it has the necessary metadata.
- *
- * @param post - The entry to validate.
- * @returns The validated post if it contains the required metadata, otherwise `undefined`.
- */
-function validateEntry(post: Entry, ctx: TransformCtx): Post | undefined {
-	if (!(post.meta && post.meta.frontmatterPosition && post.meta.frontmatter))
-		return undefined;
-	if (!post.meta.frontmatter.published) return undefined;
-	if (!post.meta.frontmatter.slug) {
-		ctx.notice(`Post "${post.tFile.name}" does not have slug`);
-		return undefined;
-	}
-	return post as Post;
-}
+	).filter((post): post is Post => {
+		if (post.meta instanceof Error) {
+			ctx.notice(`Error validating "${post.tFile.path}": ${post.meta.message}`);
+			return false;
+		}
+		return true;
+	});
 
 async function normalizePost(
 	post: Post,

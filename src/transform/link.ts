@@ -2,6 +2,9 @@ import type { Post } from "@/type";
 import type { ReferenceCache, TFile } from "obsidian";
 import { slug as slugger } from "github-slugger";
 import type { TransformAction, TransformCtxWithImage } from "@/transform/index";
+import { validateMeta } from "./validate";
+
+const IMAGE_EXT = ["png", "jpg", "jpeg", "gif", "svg", "webp"];
 
 export async function processLinks(
 	post: Post,
@@ -25,58 +28,63 @@ export async function processLinks(
 		},
 	];
 }
-
+/**
+ * Case 1: target not found / target is not md nor image / target not valid post (not published)
+ *   - link.original
+ * Case 2: target is image
+ *   - imageTf.onTransform
+ * Case 3: target is another post
+ *  - normal link
+ * @param link
+ * @param sourceTFile
+ * @param ctx
+ * @returns
+ */
 async function transformLink(
 	link: ReferenceCache,
 	sourceTFile: TFile,
 	ctx: TransformCtxWithImage,
 ): Promise<string> {
 	const targetFile = ctx.resolveLink(link.link.split("#")[0], sourceTFile.path);
+
 	if (targetFile == null) {
 		console.warn(`link not found:`, link.original);
 		return link.original;
 	}
-	const imgExt = ["png", "jpg", "jpeg", "gif", "svg", "webp"];
-	if (imgExt.includes(targetFile.extension)) {
-		{
-			return await ctx.imageTf.onTransform(link, sourceTFile, targetFile);
-		}
-	} else if (targetFile.extension === "md") {
-		{
-			const slug = getSlug(targetFile, ctx);
-			const displayText = link.displayText ?? link.link;
-			if (slug) {
-				const fragment = link.link.includes("#")
-					? slugger(link.link.split("#")[1])
-					: undefined;
-				if (targetFile.path === sourceTFile.path && fragment) {
-					return `[${displayText}](#${fragment})`;
-				} else {
-					return `[${displayText}](${slugToPath(slug, ctx) + (fragment ? "#" + fragment : "")})`;
-				}
-			} else {
-				console.warn(
-					`link target not published: ${targetFile.name} from ${sourceTFile.name}`,
-				);
-				return link.original;
-			}
-		}
-	} else {
-		{
-			console.error(
-				`unknown ext ${targetFile.extension} for ${targetFile.name}`,
-			);
 
+	if (IMAGE_EXT.includes(targetFile.extension))
+		return await ctx.imageTf.onTransform(link, sourceTFile, targetFile);
+
+	if (targetFile.extension === "md") {
+		const slug = getSlug(targetFile, ctx);
+
+		// target not published
+		if (!slug) {
+			console.warn(
+				`link target not published: "${targetFile.name}" from "${sourceTFile.name}"`,
+			);
 			return link.original;
 		}
+
+		const displayText = link.displayText ?? link.link;
+		const fragment = link.link.includes("#")
+			? "#" + slugger(link.link.split("#").slice(1).join("#"))
+			: "";
+		if (targetFile.path === sourceTFile.path && fragment) {
+			return `[${displayText}](${fragment})`;
+		} else {
+			return `[${displayText}](${slugToPath(slug, ctx)}${fragment})`;
+		}
 	}
+
+	console.error(`unknown ext ${targetFile.extension} for ${targetFile.name}`);
+	return link.original;
 }
 
 function getSlug(file: TFile, ctx: TransformCtxWithImage): string | null {
-	const { published, slug } = ctx.getFileMetadata(file)?.frontmatter ?? {};
-
-	if (!published) return null;
-	return slug ?? null;
+	const meta = validateMeta(file, ctx);
+	if (meta instanceof Error) return null;
+	return meta.frontmatter.slug;
 }
 
 function slugToPath(slug: string, ctx: TransformCtxWithImage): string {
