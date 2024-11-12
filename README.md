@@ -6,22 +6,33 @@ Export notes with the `published: true` front matter into plain Markdown (and up
 
 Meanwhile, wiki links`[[]]`  and many other Obsidian features can be used normally. This plugin does the work of converting `[[]]` style into `[]()` style automatically in exported markdown, leaving the links inside Obsidian untouched.
 
-Handling images that stores in the assets folder and linked by posts is kind of tricky. This plugin has 2 builtin options: embed image in output markdown via base64, or abort the export process if there any image of this kind (which means you need to upload them manually, or find another plugin to do this for you). Using a custom handler via the CustomJS plugin will also be supported in the future.
-
 ## Features (How it Works?)
 
+> [!NOTE]
 > This plugin will not modify your files in the vault! (Since v2.0.0). It only reads the files and generate new files to upload.
 
-The "All validate files - Static Site MD Export" button on panel (Ribbon) does:
+The "All validate files - Static Site MD Export" button on panel (Ribbon) transforms links/tags and handles images, while the "Current file - Static Site MD Export" does similar staff, but only validate the current note, not all the notes.
 
-1. Get all the notes in vault with front matter "published" and the value is true (bool value).
+### Transform links and tags (main process)
+1. Get all (if use the "all" button) or active note(s) in vault with front matter "published" and the value is true (bool value).
 1. For `[[]]` or `![[]]` links (also `[]()` that doesn't point to an URL, or say, those obsidian thinks is a wiki link) in notes, it finds the target note, and transform them into standard markdown format (if target note also has `published: true` property). See [Transformation Details](#transformation-details) for more details.
 1. Change tags in front matter into 1-depth format (discarding content before /), removing tags in the content and merge them into the front matter.
 1. Upload the markdown files via git. You can also choose which folder in git repo to upload to. More upload methods will be supported in the future.
 
-The "Current file - Static Site MD Export" does similar staff, but only validate the current note, not all the notes.
+### Handle images
 
-If you delete a file in your vault, your file in git won't be deleted. You need to go there to delete them. Similarly, if you change the slug of a post, you need to delete the markdown file in git with the original slug as name.
+Obsidian also views images that stores in the assets folder as wiki links, so they are transform together with other links. 
+
+However, handling local images like this is kind of tricky. This plugin has 2 builtin options: embed image in output markdown via base64, or abort the export process if there any image of this kind. 
+
+The latter option implies you need to upload them manually first, or find another plugin to do this for you, e.g. my [obsidian-image-upload](https://github.com/yy4382/obsidian-image-upload), which I find useful in blog workflows. A basic description for it:
+
+> A simple plugin that uploads local images in a note to S3 (and S3 compatible services), replace the image link with the S3 link, and remove the images from the vault if they're exclusively used within that note. (optional).
+> 
+> Or, instead of S3, you can write a custom function to upload the image via Custom JS plugin.
+
+> [!NOTE]
+> If you delete a file in your vault, your file in git won't be deleted. You need to go there to delete them. Similarly, if you change the slug of a post, you need to delete the markdown file in git with the original slug as name.
 
 ## Usage
 
