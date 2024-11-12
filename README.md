@@ -14,7 +14,7 @@ Meanwhile, wiki links`[[]]`  and many other Obsidian features can be used normal
 The "All validate files - Static Site MD Export" button on panel (Ribbon) transforms links/tags and handles images, while the "Current file - Static Site MD Export" does similar staff, but only validate the current note, not all the notes.
 
 ### Transform links and tags (main process)
-1. Get all (if use the "all" button) or active note(s) in vault with front matter "published" and the value is true (bool value).
+1. Get all (if use the "all" button) or active note(s) in vault with front matter "published" (or other key you configured) and the value is true (bool value).
 1. For `[[]]` or `![[]]` links (also `[]()` that doesn't point to an URL, or say, those obsidian thinks is a wiki link) in notes, it finds the target note, and transform them into standard markdown format (if target note also has `published: true` property). See [Transformation Details](#transformation-details) for more details.
 1. Change tags in front matter into 1-depth format (discarding content before /), removing tags in the content and merge them into the front matter.
 1. Upload the markdown files via git. You can also choose which folder in git repo to upload to. More upload methods will be supported in the future.
