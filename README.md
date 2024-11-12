@@ -15,19 +15,19 @@ Handling images that stores in the assets folder and linked by posts is kind of 
 The "All validate files - Static Site MD Export" button on panel (Ribbon) does:
 
 1. Get all the notes in vault with front matter "published" and the value is true (bool value).
-1. For `[[]]` or `![[]]` links (also `[]()` that doesn't point to an URL, or say, those obsidian thinks is a wiki link) in notes, it finds the target note, and transform them into standard markdown format. See [Transformation Details](#transformation-details) for more details.
+1. For `[[]]` or `![[]]` links (also `[]()` that doesn't point to an URL, or say, those obsidian thinks is a wiki link) in notes, it finds the target note, and transform them into standard markdown format (if target note also has `published: true` property). See [Transformation Details](#transformation-details) for more details.
 1. Change tags in front matter into 1-depth format (discarding content before /), removing tags in the content and merge them into the front matter.
 1. Upload the markdown files via git. You can also choose which folder in git repo to upload to. More upload methods will be supported in the future.
 
 The "Current file - Static Site MD Export" does similar staff, but only validate the current note, not all the notes.
 
-If you delete a file in your vault, your file in S3 or git won't be deleted. You need to go there to delete them. Similarly, if you change the slug of a post, you need to delete the markdown file in s3 or git with the original slug as name.
+If you delete a file in your vault, your file in git won't be deleted. You need to go there to delete them. Similarly, if you change the slug of a post, you need to delete the markdown file in git with the original slug as name.
 
 ## Usage
 
 1. Install the plugin in Obsidian.
 2. Configure the plugin settings in Obsidian's settings panel. See [Settings.ts](src/Settings.ts) for more details on what can be configured.
-3. Click the "Static Site MD Export" and it will automatically process and deploy md files to s3.
+3. Click the "Static Site MD Export" and it will automatically process and deploy md files to git.
 4. Use whatever you like to generate these files into a static site. Hexo or Hugo are good choice for static site generation.
 5. If you use GitHub actions to build/deploy, try using the "Trigger GitHub Action deploy" button to simplify workflow: update your site without leaving obsidian!
 
