@@ -39,7 +39,6 @@ export type CachedMetadataPost = Omit<
 export const frontmatterSchema = z
 	.object({
 		slug: z.string(),
-		published: z.literal(true),
 	})
 	.passthrough();
 

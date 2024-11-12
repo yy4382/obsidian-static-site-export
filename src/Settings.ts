@@ -29,6 +29,7 @@ type TransformSettings = {
 	post_prefix: string;
 	transformTags: boolean;
 	imageTransformer: "base64" | "abort";
+	publishedFlag: string;
 };
 
 export type SSSettings = {
@@ -41,6 +42,7 @@ export const DEFAULT_SETTINGS: SSSettings = {
 		post_prefix: "/post/",
 		imageTransformer: "abort",
 		transformTags: true,
+		publishedFlag: "published",
 	},
 	uploader: {
 		type: "git",
@@ -232,5 +234,19 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
+
+		new Setting(containerEl)
+			.setName("Published flag")
+			.setDesc(
+				"Frontmatter key to determine if the post is published. Default to 'published'.",
+			)
+			.addText((text) =>
+				text
+					.setValue(settings.transformer.publishedFlag)
+					.onChange(async (value) => {
+						settings.transformer.publishedFlag = value;
+						await this.plugin.saveSettings();
+					}),
+			);
 	}
 }

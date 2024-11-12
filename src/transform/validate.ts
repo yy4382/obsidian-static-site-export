@@ -1,3 +1,4 @@
+import { SSSettings } from "@/type";
 import { CachedMetadataPost, frontmatterSchema } from ".";
 import { App, TFile } from "obsidian";
 export class PostValidationError extends Error {
@@ -23,6 +24,7 @@ function formatZodError(
 export function validateMeta(
 	file: TFile,
 	ctx: {
+		settings: SSSettings;
 		getFileMetadata: App["metadataCache"]["getFileCache"];
 	},
 ): CachedMetadataPost | PostValidationError {
@@ -32,6 +34,9 @@ export function validateMeta(
 	const meta = ctx.getFileMetadata(file);
 	if (!meta || !meta.frontmatter || !meta.frontmatterPosition)
 		return new PostValidationError("No frontmatter", file);
+
+	if (meta.frontmatter[ctx.settings.transformer.publishedFlag] !== true)
+		return new PostValidationError("Not published", file);
 
 	const { error } = frontmatterSchema.safeParse(meta.frontmatter);
 	if (error) return new PostValidationError(formatZodError(error), file);
