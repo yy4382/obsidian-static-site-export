@@ -6,6 +6,8 @@ Export notes with the `published: true` front matter into plain Markdown (and up
 
 Meanwhile, wiki links`[[]]`  and many other Obsidian features can be used normally. This plugin does the work of converting `[[]]` style into `[]()` style automatically in exported markdown, leaving the links inside Obsidian untouched.
 
+[Simple guide on how to use this plugin with Hugo and Github Pages](https://github.com/yy4382/obsidian-static-site-export/wiki/Simple-Guide-with-Hugo)
+
 ## Features (How it Works?)
 
 > [!NOTE]
