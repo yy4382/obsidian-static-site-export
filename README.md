@@ -36,14 +36,6 @@ The latter option implies you need to upload them manually first, or find anothe
 > [!NOTE]
 > If you delete a file in your vault, your file in git won't be deleted. You need to go there to delete them. Similarly, if you change the slug of a post, you need to delete the markdown file in git with the original slug as name.
 
-## Usage
-
-1. Install the plugin in Obsidian.
-2. Configure the plugin settings in Obsidian's settings panel. See [Settings.ts](src/Settings.ts) for more details on what can be configured.
-3. Click the "Static Site MD Export" and it will automatically process and deploy md files to git.
-4. Use whatever you like to generate these files into a static site. Hexo or Hugo are good choice for static site generation.
-5. If you use GitHub actions to build/deploy, try using the "Trigger GitHub Action deploy" button to simplify workflow: update your site without leaving obsidian!
-
 ## Transformation Details
 
 ### Links
