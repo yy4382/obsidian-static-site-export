@@ -200,24 +200,32 @@ async function syncLocalRepo(g: GitOps) {
 	};
 
 	if (!(await needClone())) return;
-	clearIndexedDB();
+	await clearIndexedDB();
 	g.fs.init(INDEX_DB_NAME);
 	await g.clone();
 }
 
-export function clearIndexedDB(): void {
-	const request = indexedDB.deleteDatabase(INDEX_DB_NAME);
-	request.onsuccess = (e: IDBVersionChangeEvent): void => {
-		if (e.oldVersion === 0) {
-			new Notice("DB already cleared");
-		} else {
-			new Notice("Database (used by git upload) cleared");
-		}
-	};
-	request.onerror = (e): void => {
-		console.error("Couldn't delete database", e);
-		new Notice("Couldn't delete database; see console for details");
-	};
+export async function clearIndexedDB(): Promise<void> {
+	await new Promise<void>((resolve, reject) => {
+		const request = indexedDB.deleteDatabase(INDEX_DB_NAME);
+
+		request.onsuccess = (e: IDBVersionChangeEvent): void => {
+			if (e.oldVersion === 0) {
+				new Notice("DB already cleared");
+			} else {
+				new Notice("Database (used by git upload) cleared");
+			}
+			resolve();
+		};
+		request.onerror = (e): void => {
+			console.error("Couldn't delete database", e);
+			new Notice("Couldn't delete database; see console for details");
+			reject(e);
+		};
+		request.onblocked = (): void => {
+			console.warn("IndexedDB deletion blocked. Close other tabs and retry.");
+		};
+	});
 }
 
 async function writeFileWithCheck(

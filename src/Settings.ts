@@ -179,8 +179,8 @@ export class Ob2StaticSettingTab extends PluginSettingTab {
 				.setName("Delete cache")
 				.setDesc("Delete the local cache database used by git")
 				.addButton((button) => {
-					button.setButtonText("Delete").onClick(() => {
-						clearIndexedDB();
+					button.setButtonText("Delete").onClick(async () => {
+						await clearIndexedDB();
 					});
 				});
 		}
