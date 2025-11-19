@@ -1,7 +1,7 @@
 {
 	"id": "ob2static-site",
 	"name": "Static Site MD Exporter",
-	"version": "2.1.0",
+	"version": "2.1.1",
 	"minAppVersion": "0.15.0",
 	"description": "Export specific notes to general md for static site generator like Hugo, Hexo, Astro and more.",
 	"author": "Yunfi",
